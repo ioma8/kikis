@@ -572,17 +572,19 @@ export default function BoardPage() {
     <div className="min-h-screen bg-[#f5f6f8] text-[#202329]">
       <AppHeader />
 
-      <main className="mx-auto max-w-[1540px] px-6 py-4 lg:px-10 lg:py-5">
-        <section className="mb-4 flex items-center justify-between gap-3">
+      <main className="mx-auto max-w-[1540px] px-4 py-3 sm:px-6 sm:py-4 lg:px-10 lg:py-5">
+        <section className="mb-3 flex min-w-0 items-center justify-between gap-3 sm:mb-4">
           <div className="flex min-w-0 items-baseline gap-2">
             {/* Board selector */}
-            <div className="relative">
+            <div className="relative min-w-0">
               <button
                 type="button"
                 onClick={() => setShowBoardMenu(!showBoardMenu)}
-                className="inline-flex items-center gap-1.5 text-[22px] font-semibold tracking-[-0.04em] text-[#242932] hover:text-[#5c61d9]"
+                className="inline-flex max-w-full items-center gap-1.5 text-[20px] font-semibold tracking-[-0.04em] text-[#242932] hover:text-[#5c61d9] sm:text-[22px]"
               >
-                {boardName || 'Board'}
+                <span className="max-w-[calc(100vw-7rem)] truncate sm:max-w-96">
+                  {boardName || 'Board'}
+                </span>
                 <ChevronDown size={17} className="text-[#9aa2ad]" />
               </button>
 
@@ -663,7 +665,7 @@ export default function BoardPage() {
                 </>
               )}
             </div>
-            <p className="truncate text-xs text-[#858e9d]">
+            <p className="hidden truncate text-xs text-[#858e9d] sm:block">
               {totalCards > 0
                 ? `${totalCards} tasks · ${columns.length} columns`
                 : 'Your tasks at a glance'}
@@ -705,13 +707,13 @@ export default function BoardPage() {
         {actionError && (
           <div
             role="alert"
-            className="mb-3 flex items-center justify-between rounded-lg border border-[#f0d4a6] bg-[#fffaf0] px-3 py-2 text-xs text-[#8f6728]"
+            className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-[#f0d4a6] bg-[#fffaf0] px-3 py-2 text-xs text-[#8f6728]"
           >
-            <span>{actionError}</span>
+            <span className="min-w-0 flex-1 break-words">{actionError}</span>
             <button
               type="button"
               onClick={() => setActionError(null)}
-              className="ml-3 font-medium hover:underline"
+              className="ml-auto shrink-0 font-medium hover:underline"
             >
               Dismiss
             </button>
@@ -720,7 +722,7 @@ export default function BoardPage() {
 
         {totalCards === 0 && !hasFilters ? <BoardEmptyState onAddTask={handleNewTask} /> : null}
 
-        <section id="board" className="overflow-x-auto pb-4">
+        <section id="board" className="overflow-x-auto overscroll-x-contain pb-4">
           <Kanban
             value={board}
             onValueChange={setBoard}

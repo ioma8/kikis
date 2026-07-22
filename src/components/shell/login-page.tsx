@@ -17,14 +17,14 @@ export function LoginPage() {
 
   if (sent) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f5f6f8] p-6">
-        <div className="w-full max-w-sm rounded-xl border border-[#e1e4e9] bg-white p-8 text-center shadow-sm">
+      <div className="flex min-h-screen items-center justify-center bg-[#f5f6f8] p-4 sm:p-6">
+        <div className="w-full max-w-sm rounded-xl border border-[#e1e4e9] bg-white p-6 text-center shadow-sm sm:p-8">
           <div className="mx-auto mb-4 grid size-12 place-items-center rounded-full bg-[#e8e9ff] text-xl font-bold text-[#5c61d9]">
             ✉️
           </div>
           <h1 className="mb-2 text-lg font-semibold text-[#242932]">Check your email</h1>
           <p className="text-sm text-[#858e9d]">
-            We sent a magic link to <strong className="text-[#343b46]">{email}</strong>.
+            We sent a magic link to <strong className="break-all text-[#343b46]">{email}</strong>.
           </p>
         </div>
       </div>
@@ -62,8 +62,8 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f5f6f8] p-6">
-      <div className="w-full max-w-sm rounded-xl border border-[#e1e4e9] bg-white p-8 shadow-sm">
+    <div className="flex min-h-screen items-center justify-center bg-[#f5f6f8] p-4 sm:p-6">
+      <div className="w-full max-w-sm rounded-xl border border-[#e1e4e9] bg-white p-6 shadow-sm sm:p-8">
         <div className="mb-6 flex items-center gap-2.5 text-xl font-semibold tracking-[-0.03em] text-[#242932]">
           <span className="grid size-8 place-items-center rounded-[9px] bg-[#5c61d9] text-[15px] font-bold text-white">
             k

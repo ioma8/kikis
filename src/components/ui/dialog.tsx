@@ -14,10 +14,10 @@ function DialogContent({ className, ...props }: ComponentProps<typeof DialogPrim
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/20 transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0" />
-      <DialogPrimitive.Viewport className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden p-4">
+      <DialogPrimitive.Viewport className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden p-2 sm:p-4">
         <DialogPrimitive.Popup
           className={cn(
-            'relative flex max-h-full min-h-0 w-[calc(100%-2rem)] max-w-lg flex-col gap-4 overflow-hidden rounded-xl border border-[#e1e4e9] bg-white p-6 text-[#242932] shadow-lg outline-none transition-[scale,opacity] data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0',
+            'relative flex max-h-full min-h-0 w-[calc(100%-1rem)] max-w-lg flex-col gap-4 overflow-hidden rounded-xl border border-[#e1e4e9] bg-white p-4 text-[#242932] shadow-lg outline-none transition-[scale,opacity] data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0 sm:w-[calc(100%-2rem)] sm:p-6',
             className,
           )}
           {...props}
@@ -54,7 +54,15 @@ function DialogHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
 }
 
 function DialogFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('flex justify-end gap-2', className)} {...props} />
+  return (
+    <div
+      className={cn(
+        'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end [&>*]:w-full sm:[&>*]:w-auto',
+        className,
+      )}
+      {...props}
+    />
+  )
 }
 
 function DialogTitle({ className, ...props }: ComponentProps<typeof DialogPrimitive.Title>) {

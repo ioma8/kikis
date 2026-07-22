@@ -250,11 +250,11 @@ export function TaskEditor({
         if (!nextOpen) handleClose()
       }}
     >
-      <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-2xl p-0">
+      <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100vw-1rem)] p-0 sm:max-h-[calc(100dvh-2rem)] sm:max-w-2xl">
         <DialogScrollArea>
-          <div className="flex flex-col gap-4 p-5 sm:p-6">
+          <div className="flex flex-col gap-3 p-4 sm:gap-4 sm:p-6">
             <DialogHeader className="flex-row items-center justify-between gap-4">
-              <div className="flex min-w-0 items-baseline gap-3">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5">
                 <DialogTitle>{isEditing ? 'Edit task' : 'New task'}</DialogTitle>
                 <DialogDescription className="sr-only">
                   {isEditing ? 'Edit the selected task.' : 'Create a new task.'}
@@ -346,7 +346,7 @@ export function TaskEditor({
                       setPriority(event.target.value as Priority)
                       markDirty()
                     }}
-                    className="h-8 w-full rounded-md border border-[#e7e9ed] bg-white px-2 text-xs text-[#515966] outline-none focus:border-[#a6a9ed]"
+                    className="h-9 w-full rounded-md border border-[#e7e9ed] bg-white px-2 text-xs text-[#515966] outline-none focus:border-[#a6a9ed] sm:h-8"
                   >
                     {PRIORITIES.map((item) => (
                       <option key={item.value} value={item.value}>
@@ -369,7 +369,7 @@ export function TaskEditor({
                       setProject(event.target.value)
                       markDirty()
                     }}
-                    className="h-8 w-full rounded-md border border-[#e7e9ed] bg-white px-2 text-xs text-[#515966] outline-none placeholder:text-[#a2a9b4] focus:border-[#a6a9ed] focus:ring-2 focus:ring-[#eeeeff]"
+                    className="h-9 w-full rounded-md border border-[#e7e9ed] bg-white px-2 text-xs text-[#515966] outline-none placeholder:text-[#a2a9b4] focus:border-[#a6a9ed] focus:ring-2 focus:ring-[#eeeeff] sm:h-8"
                   />
                 </div>
                 <div>
@@ -387,7 +387,7 @@ export function TaskEditor({
                       setDueDate(event.target.value)
                       markDirty()
                     }}
-                    className="h-8 w-full rounded-md border border-[#e7e9ed] bg-white px-2 text-xs text-[#515966] outline-none focus:border-[#a6a9ed]"
+                    className="h-9 w-full rounded-md border border-[#e7e9ed] bg-white px-2 text-xs text-[#515966] outline-none focus:border-[#a6a9ed] sm:h-8"
                   />
                   {fieldErrors.dueDate && (
                     <p className="mt-1 text-[11px] text-red-500">{fieldErrors.dueDate}</p>

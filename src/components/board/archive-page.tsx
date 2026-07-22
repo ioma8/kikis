@@ -72,9 +72,11 @@ export function ArchivePage() {
   return (
     <div className="min-h-screen bg-[#f5f6f8] text-[#202329]">
       <AppHeader />
-      <main className="mx-auto max-w-[1540px] px-6 py-8 lg:px-10 lg:py-10">
-        <div className="mb-6">
-          <h1 className="text-[30px] font-semibold tracking-[-0.04em] text-[#242932]">Archive</h1>
+      <main className="mx-auto max-w-[1540px] px-4 py-5 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
+        <div className="mb-5 sm:mb-6">
+          <h1 className="text-2xl font-semibold tracking-[-0.04em] text-[#242932] sm:text-[30px]">
+            Archive
+          </h1>
           <p className="mt-2 text-sm text-[#858e9d]">
             {archivedCards.length} archived card{archivedCards.length !== 1 ? 's' : ''}
           </p>
@@ -83,13 +85,13 @@ export function ArchivePage() {
         {error && (
           <div
             role="alert"
-            className="mb-4 flex items-center justify-between rounded-lg border border-[#f2c6c2] bg-[#fff5f4] px-3 py-2 text-xs text-[#b85c55]"
+            className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-[#f2c6c2] bg-[#fff5f4] px-3 py-2 text-xs text-[#b85c55]"
           >
-            <span>{error}</span>
+            <span className="min-w-0 flex-1 break-words">{error}</span>
             <button
               type="button"
               onClick={() => void loadArchived()}
-              className="ml-3 font-medium hover:underline"
+              className="ml-auto shrink-0 font-medium hover:underline"
             >
               Retry
             </button>
@@ -113,7 +115,7 @@ export function ArchivePage() {
             {archivedCards.map((card) => (
               <div
                 key={card.id}
-                className="flex items-center justify-between rounded-lg border border-[#e1e4e9] bg-white p-3.5 shadow-[0_1px_2px_rgba(25,35,50,0.03)]"
+                className="flex items-center justify-between gap-3 rounded-lg border border-[#e1e4e9] bg-white p-3.5 shadow-[0_1px_2px_rgba(25,35,50,0.03)]"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-[#343b46]">{card.title}</p>

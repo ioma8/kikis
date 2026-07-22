@@ -54,7 +54,7 @@ export function TaskCard({
             }}
             aria-label="Task menu"
             aria-expanded={menuOpen}
-            className="grid size-6 place-items-center rounded-md text-[#bcc2cc] opacity-0 transition hover:bg-[#f0f1f3] hover:text-[#858e9d] group-hover/card:opacity-100"
+            className="grid size-8 place-items-center rounded-md text-[#bcc2cc] opacity-100 transition focus-within:opacity-100 hover:bg-[#f0f1f3] hover:text-[#858e9d] sm:size-6 sm:opacity-0 sm:group-hover/card:opacity-100"
           >
             <MoreHorizontal size={14} />
           </button>
@@ -105,16 +105,16 @@ export function TaskCard({
         </div>
       )}
       <div className="mb-2.5 flex items-start justify-between gap-2">
-        <h3 className="text-[13px] font-medium leading-5 text-[#343b46]">{card.title}</h3>
+        <h3 className="min-w-0 flex-1 break-words text-[13px] font-medium leading-5 text-[#343b46]">
+          {card.title}
+        </h3>
         <span
           className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold ${priorityClass[card.priority]}`}
         >
           {PRIORITY_LABEL[card.priority]}
         </span>
       </div>
-      <div className="mb-2.5 flex items-center gap-1.5 text-[11px] text-[#9199a5]">
-        {card.project}
-      </div>
+      <div className="mb-2.5 min-w-0 truncate text-[11px] text-[#9199a5]">{card.project}</div>
       {descriptionExcerpt && (
         <p className="mb-2.5 line-clamp-2 text-[11px] leading-4 text-[#6f7886]">
           {descriptionExcerpt}

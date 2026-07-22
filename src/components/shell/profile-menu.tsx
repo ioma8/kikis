@@ -7,16 +7,17 @@ export function ProfileMenu({ displayName, initials }: { displayName: string; in
   const [signOutOpen, setSignOutOpen] = useState(false)
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex min-w-0 items-center gap-2 sm:gap-3">
       <button
         type="button"
         onClick={() => setSignOutOpen(true)}
-        className="flex items-center gap-2 rounded-full border border-[#e5e7eb] bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium text-[#555e6c] hover:bg-[#f5f6f8]"
+        aria-label={`Account: ${displayName}`}
+        className="flex min-w-0 items-center gap-2 rounded-full border border-[#e5e7eb] bg-white py-1.5 pl-1.5 pr-2 text-xs font-medium text-[#555e6c] hover:bg-[#f5f6f8] sm:pr-3"
       >
-        <span className="grid size-6 place-items-center rounded-full bg-[#e6e6ff] text-[10px] font-semibold text-[#5c61d9]">
+        <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[#e6e6ff] text-[10px] font-semibold text-[#5c61d9]">
           {initials}
         </span>
-        {displayName}
+        <span className="hidden max-w-32 truncate sm:inline">{displayName}</span>
       </button>
       <ConfirmDialog
         open={signOutOpen}

@@ -64,7 +64,7 @@ export function ColumnMenu({
         type="button"
         onClick={() => setOpen(!open)}
         aria-label={`${columnName} menu`}
-        className="grid size-6 place-items-center rounded-md text-[#9aa2ad] hover:bg-white hover:text-[#5c61d9]"
+        className="grid size-8 place-items-center rounded-md text-[#9aa2ad] hover:bg-white hover:text-[#5c61d9] sm:size-6"
       >
         <MoreHorizontal size={14} />
       </button>
@@ -116,7 +116,7 @@ export function ColumnMenu({
                         key={color}
                         type="button"
                         onClick={() => handleColorPick(color)}
-                        className="size-5 rounded-full border border-[#e1e4e9]"
+                        className="size-6 rounded-full border border-[#e1e4e9] sm:size-5"
                         style={{ backgroundColor: color }}
                         aria-label={`Set color ${color}`}
                       />

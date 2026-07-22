@@ -661,7 +661,7 @@ function KanbanColumnHandle({
     ...attributes,
     ...listeners,
     className: cn(
-      'opacity-0 transition-opacity group-hover/kanban-column:opacity-100',
+      'opacity-100 transition-opacity sm:opacity-0 sm:group-hover/kanban-column:opacity-100',
       cursor && (isDragging ? 'cursor-grabbing!' : 'cursor-grab!'),
       className,
     ),

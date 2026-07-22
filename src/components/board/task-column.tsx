@@ -36,10 +36,12 @@ export function TaskColumn({
       value={column.id}
       className="flex min-w-[270px] flex-col rounded-xl border border-[#e1e4e9] bg-[#eef0f3]/70 p-2.5"
     >
-      <div className="mb-2.5 flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
+      <div className="mb-2.5 flex min-w-0 items-center justify-between gap-2 px-1">
+        <div className="flex min-w-0 items-center gap-2">
           <span className="size-2 rounded-full" style={{ backgroundColor: column.color }} />
-          <h2 className="text-[13px] font-semibold text-[#4a5260]">{column.name}</h2>
+          <h2 className="min-w-0 truncate text-[13px] font-semibold text-[#4a5260]">
+            {column.name}
+          </h2>
           <span className="rounded bg-[#e1e5ea] px-1.5 py-0.5 text-[10px] font-semibold text-[#89919d]">
             {cards.length}
           </span>

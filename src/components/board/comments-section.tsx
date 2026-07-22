@@ -101,23 +101,25 @@ export function CommentsSection({ cardId, collapsible = false }: CommentsSection
                   </button>
                 )}
               </div>
-              <p className="mt-0.5 text-[12px] leading-4 text-[#343b46]">{comment.content}</p>
+              <p className="mt-0.5 break-words text-[12px] leading-4 text-[#343b46]">
+                {comment.content}
+              </p>
             </div>
           ))}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row">
         <input
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Add a comment…"
-          className="h-7 flex-1 rounded border border-[#e1e4e9] bg-white px-2 text-[12px] text-[#515966] outline-none placeholder:text-[#a2a9b4] focus:border-[#a6a9ed]"
+          className="h-9 min-w-0 flex-1 rounded border border-[#e1e4e9] bg-white px-2 text-[12px] text-[#515966] outline-none placeholder:text-[#a2a9b4] focus:border-[#a6a9ed] sm:h-7"
         />
         <button
           type="submit"
           disabled={sending || !content.trim()}
-          className="rounded bg-[#5c61d9] px-2.5 text-[11px] font-medium text-white disabled:opacity-50"
+          className="h-9 rounded bg-[#5c61d9] px-3 text-[11px] font-medium text-white disabled:opacity-50 sm:h-7"
         >
           {sending ? '…' : 'Send'}
         </button>

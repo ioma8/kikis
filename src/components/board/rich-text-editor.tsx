@@ -54,7 +54,7 @@ function ToolbarButton({ label, active = false, onClick, children }: ToolbarButt
       title={label}
       onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
-      className={`grid size-7 place-items-center rounded text-[#6f7886] transition hover:bg-[#f0f1f3] hover:text-[#5c61d9] ${active ? 'bg-[#eeeeff] text-[#5c61d9]' : ''}`}
+      className={`grid size-8 place-items-center rounded text-[#6f7886] transition hover:bg-[#f0f1f3] hover:text-[#5c61d9] sm:size-7 ${active ? 'bg-[#eeeeff] text-[#5c61d9]' : ''}`}
     >
       {children}
     </button>
@@ -183,7 +183,7 @@ export function RichTextEditor({ id, value, onChange, disabled = false }: RichTe
         <div
           role="toolbar"
           aria-label="Text formatting"
-          className="flex items-center gap-0.5 border-b border-[#e7e9ed] bg-white px-2 py-1"
+          className="flex flex-wrap items-center gap-0.5 border-b border-[#e7e9ed] bg-white px-2 py-1.5 sm:py-1"
         >
           <ToolbarButton
             label="Bold"

@@ -21,10 +21,10 @@ export function AppHeader() {
 
   return (
     <header className="border-b border-[#e2e5ea] bg-white">
-      <div className="mx-auto flex h-[68px] max-w-[1540px] items-center justify-between px-6 lg:px-10">
-        <div className="flex items-center gap-8">
+      <div className="mx-auto flex h-14 max-w-[1540px] items-center justify-between px-4 sm:h-[68px] sm:px-6 lg:px-10">
+        <div className="flex min-w-0 items-center gap-4 sm:gap-8">
           <Link
-            className="flex items-center gap-2.5 text-[19px] font-semibold tracking-[-0.03em]"
+            className="flex shrink-0 items-center gap-2.5 text-[18px] font-semibold tracking-[-0.03em] sm:text-[19px]"
             to="/board"
           >
             <span className="grid size-7 place-items-center rounded-[9px] bg-[#5c61d9] text-[13px] font-bold text-white">
@@ -32,7 +32,7 @@ export function AppHeader() {
             </span>
             kikis
           </Link>
-          <nav className="hidden items-center gap-6 text-[13px] text-[#7f8795] md:flex">
+          <nav className="flex min-w-0 items-center gap-3 text-[12px] text-[#7f8795] sm:gap-6 sm:text-[13px]">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
