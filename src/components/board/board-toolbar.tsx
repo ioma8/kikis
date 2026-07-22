@@ -26,13 +26,9 @@ export function BoardToolbar({
       <div className="flex flex-wrap items-center gap-2">
         <span className="mr-1 text-xs font-semibold text-[#49515e]">My workspace</span>
         <span className="h-4 w-px bg-[#e5e7eb]" />
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-[#7b8492] hover:bg-[#f5f6f8]"
-          aria-label="Filter"
-        >
+        <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-[#7b8492]">
           <SlidersHorizontal size={14} /> Filter
-        </button>
+        </span>
         {hasFilters && (
           <button
             type="button"
@@ -62,7 +58,9 @@ export function BoardToolbar({
         >
           <option value="">All projects</option>
           {projects.map((project) => (
-            <option key={project} value={project}>{project}</option>
+            <option key={project} value={project}>
+              {project}
+            </option>
           ))}
         </select>
         <button

@@ -65,7 +65,9 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-[#f5f6f8] p-6">
       <div className="w-full max-w-sm rounded-xl border border-[#e1e4e9] bg-white p-8 shadow-sm">
         <div className="mb-6 flex items-center gap-2.5 text-xl font-semibold tracking-[-0.03em] text-[#242932]">
-          <span className="grid size-8 place-items-center rounded-[9px] bg-[#5c61d9] text-[15px] font-bold text-white">k</span>
+          <span className="grid size-8 place-items-center rounded-[9px] bg-[#5c61d9] text-[15px] font-bold text-white">
+            k
+          </span>
           kikis
         </div>
 
@@ -82,7 +84,9 @@ export function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-xs font-medium text-[#49515e] mb-1.5">Email</label>
+            <label htmlFor="email" className="block text-xs font-medium text-[#49515e] mb-1.5">
+              Email
+            </label>
             <input
               id="email"
               type="email"
@@ -96,7 +100,9 @@ export function LoginPage() {
 
           {!useMagicLink && (
             <div>
-              <label htmlFor="password" className="block text-xs font-medium text-[#49515e] mb-1.5">Password</label>
+              <label htmlFor="password" className="block text-xs font-medium text-[#49515e] mb-1.5">
+                Password
+              </label>
               <input
                 id="password"
                 type="password"
@@ -110,9 +116,7 @@ export function LoginPage() {
             </div>
           )}
 
-          {error && (
-            <p className="text-xs text-red-500">{error}</p>
-          )}
+          {error && <p className="text-xs text-red-500">{error}</p>}
 
           <button
             type="submit"
@@ -133,7 +137,10 @@ export function LoginPage() {
           {useMagicLink ? (
             <button
               type="button"
-              onClick={() => { setUseMagicLink(false); setError(null) }}
+              onClick={() => {
+                setUseMagicLink(false)
+                setError(null)
+              }}
               className="text-[#5c61d9] hover:underline"
             >
               Sign in with password instead
@@ -141,7 +148,10 @@ export function LoginPage() {
           ) : (
             <button
               type="button"
-              onClick={() => { setUseMagicLink(true); setError(null) }}
+              onClick={() => {
+                setUseMagicLink(true)
+                setError(null)
+              }}
               className="text-[#5c61d9] hover:underline"
             >
               Send magic link instead
@@ -152,7 +162,10 @@ export function LoginPage() {
               {isSignUp ? (
                 <button
                   type="button"
-                  onClick={() => { setIsSignUp(false); setError(null) }}
+                  onClick={() => {
+                    setIsSignUp(false)
+                    setError(null)
+                  }}
                   className="text-[#5c61d9] hover:underline"
                 >
                   Already have an account? Sign in
@@ -160,7 +173,10 @@ export function LoginPage() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => { setIsSignUp(true); setError(null) }}
+                  onClick={() => {
+                    setIsSignUp(true)
+                    setError(null)
+                  }}
                   className="text-[#5c61d9] hover:underline"
                 >
                   No account? Create one

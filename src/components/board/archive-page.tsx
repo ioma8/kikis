@@ -8,26 +8,35 @@ import type { Card } from '@/types/board'
 export function ArchivePage() {
   const [archivedCards, setArchivedCards] = useState<Card[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const loadArchived = useCallback(async () => {
     setLoading(true)
-    // Load from all boards the user has access to
-    const { data: userBoards } = await supabase
-      .from('boards')
-      .select('id, name')
-    if (!userBoards?.length) {
+    setError(null)
+    try {
+      // Load from all boards the user has access to
+      const { data: userBoards, error: boardsError } = await supabase
+        .from('boards')
+        .select('id, name')
+      if (boardsError) throw boardsError
+      if (!userBoards?.length) {
+        setArchivedCards([])
+        return
+      }
+      const boardIds = userBoards.map((b) => b.id)
+      const { data, error: cardsError } = await supabase
+        .from('cards')
+        .select('*')
+        .in('board_id', boardIds)
+        .not('archived_at', 'is', null)
+        .order('archived_at', { ascending: false })
+      if (cardsError) throw cardsError
+      setArchivedCards((data ?? []) as Card[])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load archive')
+    } finally {
       setLoading(false)
-      return
     }
-    const boardIds = userBoards.map((b) => b.id)
-    const { data } = await supabase
-      .from('cards')
-      .select('*')
-      .in('board_id', boardIds)
-      .not('archived_at', 'is', null)
-      .order('archived_at', { ascending: false })
-    if (data) setArchivedCards(data as Card[])
-    setLoading(false)
   }, [])
 
   useEffect(() => {
@@ -39,7 +48,7 @@ export function ArchivePage() {
       await restoreCard(id)
       setArchivedCards((prev) => prev.filter((c) => c.id !== id))
     } catch (err) {
-      console.error('Failed to restore card:', err)
+      setError(err instanceof Error ? err.message : 'Failed to restore card')
     }
   }
 
@@ -50,7 +59,7 @@ export function ArchivePage() {
       await deleteCard(id)
       setArchivedCards((prev) => prev.filter((c) => c.id !== id))
     } catch (err) {
-      console.error('Failed to delete card:', err)
+      setError(err instanceof Error ? err.message : 'Failed to delete card')
     }
   }
 
@@ -64,6 +73,22 @@ export function ArchivePage() {
             {archivedCards.length} archived card{archivedCards.length !== 1 ? 's' : ''}
           </p>
         </div>
+
+        {error && (
+          <div
+            role="alert"
+            className="mb-4 flex items-center justify-between rounded-lg border border-[#f2c6c2] bg-[#fff5f4] px-3 py-2 text-xs text-[#b85c55]"
+          >
+            <span>{error}</span>
+            <button
+              type="button"
+              onClick={() => void loadArchived()}
+              className="ml-3 font-medium hover:underline"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-12">

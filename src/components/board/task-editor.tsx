@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react'
 import { X } from 'lucide-react'
 import { validateCardTitle, validateDescription, validateDueDate } from '@/lib/board-validation'
 import { createCard, updateCard } from '@/lib/board-mutations'
+import { useAuth } from '@/lib/auth-context'
 import { CommentsSection } from './comments-section'
 import type { Card, Priority } from '@/types/board'
 import type { PriorityDb } from '@/types/database'
@@ -12,6 +13,7 @@ interface TaskEditorProps {
   boardId: string | undefined
   columnId: string | undefined
   card: Card | null // null = creating new
+  position: number
   onSaved: (card: Card) => void
 }
 
@@ -21,7 +23,16 @@ const PRIORITIES: { value: Priority; label: string }[] = [
   { value: 'high', label: 'High' },
 ]
 
-export function TaskEditor({ open, onClose, boardId, columnId, card, onSaved }: TaskEditorProps) {
+export function TaskEditor({
+  open,
+  onClose,
+  boardId,
+  columnId,
+  card,
+  position,
+  onSaved,
+}: TaskEditorProps) {
+  const { user } = useAuth()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<Priority>('medium')
@@ -81,7 +92,7 @@ export function TaskEditor({ open, onClose, boardId, columnId, card, onSaved }: 
           title: title.trim(),
           description,
           priority: priority as PriorityDb,
-          project,
+          project: project.trim() || 'General',
           due_date: dueDate || null,
         })
         onSaved(updated as Card)
@@ -92,13 +103,13 @@ export function TaskEditor({ open, onClose, boardId, columnId, card, onSaved }: 
           column_id: columnId,
           title: title.trim(),
           description,
-          project,
+          project: project.trim() || 'General',
           priority: priority as PriorityDb,
           assignee_id: null,
           due_date: dueDate || null,
-          position: 1_000_000,
+          position,
           archived_at: null,
-          created_by: null,
+          created_by: user?.id ?? null,
         })
         onSaved(newCard as Card)
       }
@@ -116,8 +127,12 @@ export function TaskEditor({ open, onClose, boardId, columnId, card, onSaved }: 
       aria-modal="true"
       aria-label={isEditing ? 'Edit task' : 'New task'}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-      onKeyDown={(e) => { if (e.key === 'Escape') onClose() }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
     >
       <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-xl border border-[#e1e4e9] bg-white p-6 shadow-lg">
         <div className="mb-5 flex items-center justify-between">
@@ -146,7 +161,9 @@ export function TaskEditor({ open, onClose, boardId, columnId, card, onSaved }: 
               className="h-9 w-full rounded-md border border-[#e7e9ed] bg-[#fbfcfd] px-3 text-sm text-[#515966] outline-none placeholder:text-[#a2a9b4] focus:border-[#a6a9ed] focus:ring-2 focus:ring-[#eeeeff]"
               placeholder="What needs to be done?"
             />
-            {fieldErrors.title && <p className="mt-1 text-[11px] text-red-500">{fieldErrors.title}</p>}
+            {fieldErrors.title && (
+              <p className="mt-1 text-[11px] text-red-500">{fieldErrors.title}</p>
+            )}
           </div>
 
           <div>
@@ -161,12 +178,17 @@ export function TaskEditor({ open, onClose, boardId, columnId, card, onSaved }: 
               className="w-full resize-none rounded-md border border-[#e7e9ed] bg-[#fbfcfd] px-3 py-2 text-sm text-[#515966] outline-none placeholder:text-[#a2a9b4] focus:border-[#a6a9ed] focus:ring-2 focus:ring-[#eeeeff]"
               placeholder="Optional details…"
             />
-            {fieldErrors.description && <p className="mt-1 text-[11px] text-red-500">{fieldErrors.description}</p>}
+            {fieldErrors.description && (
+              <p className="mt-1 text-[11px] text-red-500">{fieldErrors.description}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="task-priority" className="block text-xs font-medium text-[#49515e] mb-1">
+              <label
+                htmlFor="task-priority"
+                className="block text-xs font-medium text-[#49515e] mb-1"
+              >
                 Priority
               </label>
               <select
@@ -176,12 +198,17 @@ export function TaskEditor({ open, onClose, boardId, columnId, card, onSaved }: 
                 className="h-9 w-full rounded-md border border-[#e7e9ed] bg-[#fbfcfd] px-2 text-sm text-[#515966] outline-none focus:border-[#a6a9ed]"
               >
                 {PRIORITIES.map((p) => (
-                  <option key={p.value} value={p.value}>{p.label}</option>
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label htmlFor="task-project" className="block text-xs font-medium text-[#49515e] mb-1">
+              <label
+                htmlFor="task-project"
+                className="block text-xs font-medium text-[#49515e] mb-1"
+              >
                 Project
               </label>
               <input
@@ -204,7 +231,9 @@ export function TaskEditor({ open, onClose, boardId, columnId, card, onSaved }: 
               onChange={(e) => setDueDate(e.target.value)}
               className="h-9 w-full rounded-md border border-[#e7e9ed] bg-[#fbfcfd] px-3 text-sm text-[#515966] outline-none focus:border-[#a6a9ed] focus:ring-2 focus:ring-[#eeeeff]"
             />
-            {fieldErrors.dueDate && <p className="mt-1 text-[11px] text-red-500">{fieldErrors.dueDate}</p>}
+            {fieldErrors.dueDate && (
+              <p className="mt-1 text-[11px] text-red-500">{fieldErrors.dueDate}</p>
+            )}
           </div>
 
           {error && <p className="text-xs text-red-500">{error}</p>}

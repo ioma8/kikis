@@ -59,5 +59,5 @@ export type Comment = {
   content: string
   created_at: string
   updated_at: string
-  author_name?: string  // populated from join
+  author_name?: string // populated from join
 }
