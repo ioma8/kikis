@@ -1,0 +1,11 @@
+{
+  "rewrites": [
+    {
+      "source": "/((?!api/|_next/|_vercel/|_assets/|favicon\\.svg|.*\\.(?:ico|svg|png|jpg|jpeg|gif|webp|woff2?|ttf|eot|js|css|map|json)).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist"
+}
