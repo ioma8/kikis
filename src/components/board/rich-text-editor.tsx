@@ -1,8 +1,20 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
+import type { Editor } from '@tiptap/core'
 import { EditorContent, useEditor } from '@tiptap/react'
+import FileHandler from '@tiptap/extension-file-handler'
+import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import StarterKit from '@tiptap/starter-kit'
-import { Bold, Italic, List, ListChecks, ListOrdered, Strikethrough, Underline } from 'lucide-react'
+import {
+  Bold,
+  ImagePlus,
+  Italic,
+  List,
+  ListChecks,
+  ListOrdered,
+  Strikethrough,
+  Underline,
+} from 'lucide-react'
 import { TaskItem, TaskList } from '@tiptap/extension-list'
 import { descriptionToEditorHtml, sanitizeDescriptionHtml } from '@/lib/description'
 
@@ -36,7 +48,43 @@ function ToolbarButton({ label, active = false, onClick, children }: ToolbarButt
   )
 }
 
+function readImageAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') resolve(reader.result)
+      else reject(new Error('Could not read image'))
+    }
+    reader.onerror = () => reject(reader.error ?? new Error('Could not read image'))
+    reader.readAsDataURL(file)
+  })
+}
+
+async function insertImageFiles(editor: Editor, files: File[], position?: number) {
+  const images = await Promise.all(
+    files.map(async (file) => ({
+      type: 'image' as const,
+      attrs: {
+        src: await readImageAsDataUrl(file),
+        alt: file.name || 'Inserted image',
+        title: file.name || null,
+      },
+    })),
+  )
+
+  if (editor.isDestroyed) return
+
+  const chain = editor.chain().focus()
+  if (position === undefined) {
+    chain.insertContent(images)
+  } else {
+    chain.insertContentAt(position, images)
+  }
+  chain.run()
+}
+
 export function RichTextEditor({ id, value, onChange, disabled = false }: RichTextEditorProps) {
+  const imageInputRef = useRef<HTMLInputElement>(null)
   const editor = useEditor({
     immediatelyRender: false,
     editable: !disabled,
@@ -48,6 +96,26 @@ export function RichTextEditor({ id, value, onChange, disabled = false }: RichTe
         a11y: {
           checkboxLabel: (node, checked) =>
             `${checked ? 'Completed' : 'Incomplete'} task: ${node.textContent || 'empty'}`,
+        },
+      }),
+      Image.configure({
+        allowBase64: true,
+        resize: {
+          enabled: true,
+          directions: ['bottom-right'],
+          minWidth: 120,
+          minHeight: 80,
+          alwaysPreserveAspectRatio: true,
+        },
+      }),
+      FileHandler.configure({
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'],
+        consumePasteEvent: true,
+        onPaste: (currentEditor, files) => {
+          void insertImageFiles(currentEditor, files)
+        },
+        onDrop: (currentEditor, files, position) => {
+          void insertImageFiles(currentEditor, files, position)
         },
       }),
       Link.configure({
@@ -68,7 +136,7 @@ export function RichTextEditor({ id, value, onChange, disabled = false }: RichTe
     editorProps: {
       attributes: {
         class:
-          'tiptap min-h-28 px-3 py-2 text-sm leading-5 text-[#515966] outline-none [&_a]:text-[#5c61d9] [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-[#dfe2e7] [&_blockquote]:pl-3 [&_code]:rounded [&_code]:bg-[#f0f1f3] [&_code]:px-1 [&_code]:text-[12px] [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_li]:ml-4 [&_ol]:list-decimal [&_p]:mb-2 [&_p:last-child]:mb-0 [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-[#f5f6f8] [&_pre]:p-2 [&_ul]:list-disc',
+          'tiptap min-h-52 px-3 py-3 text-sm leading-5 text-[#515966] outline-none [&_a]:text-[#5c61d9] [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-[#dfe2e7] [&_blockquote]:pl-3 [&_code]:rounded [&_code]:bg-[#f0f1f3] [&_code]:px-1 [&_code]:text-[12px] [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_li]:ml-4 [&_ol]:list-decimal [&_p]:mb-2 [&_p:last-child]:mb-0 [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-[#f5f6f8] [&_pre]:p-2 [&_ul]:list-disc',
       },
     },
   })
@@ -143,8 +211,24 @@ export function RichTextEditor({ id, value, onChange, disabled = false }: RichTe
           >
             <ListChecks size={14} />
           </ToolbarButton>
+          <ToolbarButton label="Insert image" onClick={() => imageInputRef.current?.click()}>
+            <ImagePlus size={14} />
+          </ToolbarButton>
         </div>
       )}
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="sr-only"
+        tabIndex={-1}
+        onChange={(event) => {
+          const files = Array.from(event.target.files ?? [])
+          event.target.value = ''
+          if (editor && files.length > 0) void insertImageFiles(editor, files)
+        }}
+      />
       <EditorContent editor={editor} />
     </div>
   )

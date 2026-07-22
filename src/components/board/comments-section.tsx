@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react'
-import { Trash2 } from 'lucide-react'
+import { ChevronDown, Trash2 } from 'lucide-react'
 import { addComment, fetchComments, deleteComment } from '@/lib/board-mutations'
 import type { Comment } from '@/types/board'
 import { useAuth } from '@/lib/auth-context'
@@ -7,9 +7,10 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 interface CommentsSectionProps {
   cardId: string
+  collapsible?: boolean
 }
 
-export function CommentsSection({ cardId }: CommentsSectionProps) {
+export function CommentsSection({ cardId, collapsible = false }: CommentsSectionProps) {
   const { user } = useAuth()
   const [comments, setComments] = useState<Comment[]>([])
   const [content, setContent] = useState('')
@@ -71,12 +72,8 @@ export function CommentsSection({ cardId }: CommentsSectionProps) {
     }
   }
 
-  return (
-    <div className="border-t border-[#eef0f2] pt-4 mt-4">
-      <h3 className="mb-3 text-xs font-semibold text-[#49515e]">
-        Comments {comments.length > 0 && `(${comments.length})`}
-      </h3>
-
+  const commentsContent = (
+    <>
       {loading ? (
         <p className="text-[11px] text-[#9aa2ad]">Loading comments…</p>
       ) : error ? (
@@ -136,6 +133,27 @@ export function CommentsSection({ cardId }: CommentsSectionProps) {
         destructive
         onConfirm={confirmDelete}
       />
+    </>
+  )
+
+  if (collapsible) {
+    return (
+      <details className="group border-t border-[#eef0f2] pt-3">
+        <summary className="flex cursor-pointer list-none items-center justify-between text-xs font-semibold text-[#49515e] [&::-webkit-details-marker]:hidden">
+          <span>Comments {comments.length > 0 && `(${comments.length})`}</span>
+          <ChevronDown className="size-4 text-[#9aa2ad] transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="pt-3">{commentsContent}</div>
+      </details>
+    )
+  }
+
+  return (
+    <div className="mt-4 border-t border-[#eef0f2] pt-4">
+      <h3 className="mb-3 text-xs font-semibold text-[#49515e]">
+        Comments {comments.length > 0 && `(${comments.length})`}
+      </h3>
+      {commentsContent}
     </div>
   )
 }

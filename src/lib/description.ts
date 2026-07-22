@@ -1,7 +1,7 @@
 import DOMPurify from 'dompurify'
 
 const STORED_HTML_PATTERN =
-  /<\/?(?:p|br|strong|b|em|i|u|s|ul|ol|li|a|blockquote|code|pre|h[1-6]|hr)\b/i
+  /<\/?(?:p|br|strong|b|em|i|u|s|ul|ol|li|a|img|blockquote|code|pre|h[1-6]|hr)\b/i
 const URL_PATTERN = /(?:https?:\/\/|www\.)[^\s<]+/gi
 const ALLOWED_TAGS = [
   'p',
@@ -20,6 +20,7 @@ const ALLOWED_TAGS = [
   'span',
   'input',
   'a',
+  'img',
   'blockquote',
   'code',
   'pre',
@@ -33,6 +34,11 @@ const ALLOWED_TAGS = [
 ]
 const ALLOWED_ATTR = [
   'href',
+  'src',
+  'alt',
+  'title',
+  'width',
+  'height',
   'target',
   'rel',
   'type',

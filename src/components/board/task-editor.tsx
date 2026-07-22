@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { X } from 'lucide-react'
+import { ChevronDown, X } from 'lucide-react'
 import { validateCardTitle, validateDescription, validateDueDate } from '@/lib/board-validation'
 import { createCard, updateCard } from '@/lib/board-mutations'
 import { useAuth } from '@/lib/auth-context'
@@ -81,6 +81,7 @@ export function TaskEditor({
   const [priority, setPriority] = useState<Priority>('medium')
   const [project, setProject] = useState('General')
   const [dueDate, setDueDate] = useState('')
+  const [detailsOpen, setDetailsOpen] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [saveState, setSaveState] = useState<SaveState>('saved')
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -121,6 +122,7 @@ export function TaskEditor({
     setPriority(nextDraft.priority)
     setProject(nextDraft.project)
     setDueDate(nextDraft.dueDate)
+    setDetailsOpen(false)
     setFieldErrors({})
     setSaveError(null)
     setSaveState('saved')
@@ -141,6 +143,7 @@ export function TaskEditor({
     const draft = draftRef.current
     const validationErrors = getValidationErrors(draft)
     if (Object.keys(validationErrors).length > 0) {
+      if (validationErrors.dueDate) setDetailsOpen(true)
       setFieldErrors(validationErrors)
       setSaveState('error')
       return
@@ -233,6 +236,12 @@ export function TaskEditor({
         : saveState === 'error'
           ? 'Needs attention'
           : 'Saved'
+  const priorityLabel = PRIORITIES.find((item) => item.value === priority)?.label ?? priority
+  const detailsSummary = [
+    priorityLabel,
+    project.trim() || 'General',
+    dueDate || 'No due date',
+  ].join(' · ')
 
   return (
     <Dialog
@@ -241,17 +250,17 @@ export function TaskEditor({
         if (!nextOpen) handleClose()
       }}
     >
-      <DialogContent className="max-h-[calc(100dvh-2rem)] p-0">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-2xl p-0">
         <DialogScrollArea>
-          <div className="flex flex-col gap-5 p-6">
-            <DialogHeader className="flex-row items-start justify-between gap-4">
-              <div>
+          <div className="flex flex-col gap-4 p-5 sm:p-6">
+            <DialogHeader className="flex-row items-center justify-between gap-4">
+              <div className="flex min-w-0 items-baseline gap-3">
                 <DialogTitle>{isEditing ? 'Edit task' : 'New task'}</DialogTitle>
                 <DialogDescription className="sr-only">
                   {isEditing ? 'Edit the selected task.' : 'Create a new task.'}
                 </DialogDescription>
                 <p
-                  className={`mt-1 text-[11px] ${saveState === 'error' ? 'text-[#b85c55]' : 'text-[#9aa2ad]'}`}
+                  className={`truncate text-[11px] ${saveState === 'error' ? 'text-[#b85c55]' : 'text-[#9aa2ad]'}`}
                   role={saveState === 'error' ? 'alert' : undefined}
                 >
                   {saveError ?? statusLabel}
@@ -267,7 +276,7 @@ export function TaskEditor({
             </DialogHeader>
 
             <div>
-              <label htmlFor="task-title" className="mb-1 block text-xs font-medium text-[#49515e]">
+              <label htmlFor="task-title" className="sr-only">
                 Title <span className="text-red-400">*</span>
               </label>
               <input
@@ -277,7 +286,7 @@ export function TaskEditor({
                   setTitle(event.target.value)
                   markDirty()
                 }}
-                className="h-9 w-full rounded-md border border-[#e7e9ed] bg-[#fbfcfd] px-3 text-sm text-[#515966] outline-none placeholder:text-[#a2a9b4] focus:border-[#a6a9ed] focus:ring-2 focus:ring-[#eeeeff]"
+                className="h-11 w-full rounded-md border border-[#e7e9ed] bg-[#fbfcfd] px-3 text-base font-medium text-[#343b46] outline-none placeholder:font-normal placeholder:text-[#a2a9b4] focus:border-[#a6a9ed] focus:ring-2 focus:ring-[#eeeeff]"
                 placeholder="What needs to be done?"
               />
               {fieldErrors.title && (
@@ -286,7 +295,7 @@ export function TaskEditor({
             </div>
 
             <div>
-              <label htmlFor="task-desc" className="mb-1 block text-xs font-medium text-[#49515e]">
+              <label htmlFor="task-desc" className="sr-only">
                 Description
               </label>
               <Suspense
@@ -310,69 +319,84 @@ export function TaskEditor({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="task-priority"
-                  className="mb-1 block text-xs font-medium text-[#49515e]"
-                >
-                  Priority
-                </label>
-                <select
-                  id="task-priority"
-                  value={priority}
-                  onChange={(event) => {
-                    setPriority(event.target.value as Priority)
-                    markDirty()
-                  }}
-                  className="h-9 w-full rounded-md border border-[#e7e9ed] bg-[#fbfcfd] px-2 text-sm text-[#515966] outline-none focus:border-[#a6a9ed]"
-                >
-                  {PRIORITIES.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
+            <details
+              open={detailsOpen}
+              onToggle={(event) => setDetailsOpen(event.currentTarget.open)}
+              className="group rounded-md border border-[#e7e9ed] bg-[#fbfcfd]"
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-[#49515e] [&::-webkit-details-marker]:hidden">
+                <span>Details</span>
+                <span className="flex min-w-0 items-center gap-2 text-[11px] font-normal text-[#858e9d]">
+                  <span className="truncate">{detailsSummary}</span>
+                  <ChevronDown className="size-4 shrink-0 transition-transform group-open:rotate-180" />
+                </span>
+              </summary>
+              <div className="grid gap-3 border-t border-[#e7e9ed] p-3 sm:grid-cols-3">
+                <div>
+                  <label
+                    htmlFor="task-priority"
+                    className="mb-1 block text-[11px] font-medium text-[#49515e]"
+                  >
+                    Priority
+                  </label>
+                  <select
+                    id="task-priority"
+                    value={priority}
+                    onChange={(event) => {
+                      setPriority(event.target.value as Priority)
+                      markDirty()
+                    }}
+                    className="h-8 w-full rounded-md border border-[#e7e9ed] bg-white px-2 text-xs text-[#515966] outline-none focus:border-[#a6a9ed]"
+                  >
+                    {PRIORITIES.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label
+                    htmlFor="task-project"
+                    className="mb-1 block text-[11px] font-medium text-[#49515e]"
+                  >
+                    Project
+                  </label>
+                  <input
+                    id="task-project"
+                    value={project}
+                    onChange={(event) => {
+                      setProject(event.target.value)
+                      markDirty()
+                    }}
+                    className="h-8 w-full rounded-md border border-[#e7e9ed] bg-white px-2 text-xs text-[#515966] outline-none placeholder:text-[#a2a9b4] focus:border-[#a6a9ed] focus:ring-2 focus:ring-[#eeeeff]"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="task-due"
+                    className="mb-1 block text-[11px] font-medium text-[#49515e]"
+                  >
+                    Due date
+                  </label>
+                  <input
+                    id="task-due"
+                    type="date"
+                    value={dueDate}
+                    onChange={(event) => {
+                      setDueDate(event.target.value)
+                      markDirty()
+                    }}
+                    className="h-8 w-full rounded-md border border-[#e7e9ed] bg-white px-2 text-xs text-[#515966] outline-none focus:border-[#a6a9ed]"
+                  />
+                  {fieldErrors.dueDate && (
+                    <p className="mt-1 text-[11px] text-red-500">{fieldErrors.dueDate}</p>
+                  )}
+                </div>
               </div>
-              <div>
-                <label
-                  htmlFor="task-project"
-                  className="mb-1 block text-xs font-medium text-[#49515e]"
-                >
-                  Project
-                </label>
-                <input
-                  id="task-project"
-                  value={project}
-                  onChange={(event) => {
-                    setProject(event.target.value)
-                    markDirty()
-                  }}
-                  className="h-9 w-full rounded-md border border-[#e7e9ed] bg-[#fbfcfd] px-3 text-sm text-[#515966] outline-none placeholder:text-[#a2a9b4] focus:border-[#a6a9ed] focus:ring-2 focus:ring-[#eeeeff]"
-                />
-              </div>
-            </div>
+            </details>
 
-            <div>
-              <label htmlFor="task-due" className="mb-1 block text-xs font-medium text-[#49515e]">
-                Due date
-              </label>
-              <input
-                id="task-due"
-                type="date"
-                value={dueDate}
-                onChange={(event) => {
-                  setDueDate(event.target.value)
-                  markDirty()
-                }}
-                className="h-9 w-full rounded-md border border-[#e7e9ed] bg-[#fbfcfd] px-3 text-sm text-[#515966] outline-none focus:border-[#a6a9ed]"
-              />
-              {fieldErrors.dueDate && (
-                <p className="mt-1 text-[11px] text-red-500">{fieldErrors.dueDate}</p>
-              )}
-            </div>
-
-            {isEditing && card && <CommentsSection cardId={card.id} />}
+            {isEditing && card && <CommentsSection cardId={card.id} collapsible />}
           </div>
         </DialogScrollArea>
       </DialogContent>

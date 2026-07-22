@@ -194,3 +194,37 @@ button {
   color: #9aa2ad;
   text-decoration: line-through;
 }
+
+.tiptap img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+}
+
+.tiptap [data-resize-container] {
+  max-width: 100%;
+  margin: 0.75rem 0;
+}
+
+.tiptap [data-resize-wrapper] {
+  max-width: 100%;
+}
+
+.tiptap [data-resize-handle] {
+  width: 0.625rem;
+  height: 0.625rem;
+  border: 2px solid white;
+  border-radius: 9999px;
+  background: #5c61d9;
+  box-shadow: 0 1px 3px rgb(36 41 50 / 25%);
+  opacity: 0;
+  cursor: nwse-resize;
+  transform: translate(50%, 50%);
+  transition: opacity 120ms ease;
+}
+
+.tiptap [data-resize-wrapper]:hover [data-resize-handle],
+.tiptap [data-resize-state='true'] [data-resize-handle] {
+  opacity: 1;
+}
