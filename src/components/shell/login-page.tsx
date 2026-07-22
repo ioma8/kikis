@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useAuth } from '@/lib/auth-context'
+import { BrandWordmark } from './brand-mark'
 
 export function LoginPage() {
   const { status, signInWithPassword, signUp, sendMagicLink } = useAuth()
@@ -64,11 +65,8 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#f5f6f8] p-4 sm:p-6">
       <div className="w-full max-w-sm rounded-xl border border-[#e1e4e9] bg-white p-6 shadow-sm sm:p-8">
-        <div className="mb-6 flex items-center gap-2.5 text-xl font-semibold tracking-[-0.03em] text-[#242932]">
-          <span className="grid size-8 place-items-center rounded-[9px] bg-[#5c61d9] text-[15px] font-bold text-white">
-            k
-          </span>
-          kikis
+        <div className="mb-6 flex items-center">
+          <BrandWordmark className="h-8 w-24" />
         </div>
 
         <h1 className="mb-1 text-lg font-semibold text-[#242932]">
