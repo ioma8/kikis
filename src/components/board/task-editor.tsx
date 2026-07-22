@@ -253,17 +253,32 @@ export function TaskEditor({
       <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100vw-1rem)] p-0 sm:max-h-[calc(100dvh-2rem)] sm:max-w-2xl">
         <DialogScrollArea>
           <div className="flex flex-col gap-3 p-4 sm:gap-4 sm:p-6">
-            <DialogHeader className="flex-row items-center justify-between gap-4">
+            <DialogHeader className="sticky top-0 z-10 -mx-4 -mt-4 flex-row items-center justify-between gap-4 border-b border-[#eef0f2] bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:-mt-6 sm:px-6">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                <DialogTitle>{isEditing ? 'Edit task' : 'New task'}</DialogTitle>
+                <DialogTitle className="text-lg">
+                  {isEditing ? 'Edit task' : 'New task'}
+                </DialogTitle>
                 <DialogDescription className="sr-only">
                   {isEditing ? 'Edit the selected task.' : 'Create a new task.'}
                 </DialogDescription>
                 <p
-                  className={`truncate text-[11px] ${saveState === 'error' ? 'text-[#b85c55]' : 'text-[#9aa2ad]'}`}
+                  className={`inline-flex max-w-full items-center gap-1.5 truncate text-[11px] ${saveState === 'error' ? 'text-[#b85c55]' : 'text-[#737d8b]'}`}
                   role={saveState === 'error' ? 'alert' : undefined}
+                  aria-live="polite"
                 >
-                  {saveError ?? statusLabel}
+                  <span
+                    aria-hidden="true"
+                    className={`size-1.5 shrink-0 rounded-full ${
+                      saveState === 'saving'
+                        ? 'animate-pulse bg-[#a6a9ed]'
+                        : saveState === 'error'
+                          ? 'bg-[#c46c63]'
+                          : saveState === 'dirty'
+                            ? 'bg-[#d29a42]'
+                            : 'bg-[#68af87]'
+                    }`}
+                  />
+                  <span className="truncate">{saveError ?? statusLabel}</span>
                 </p>
               </div>
               <DialogClose
@@ -324,7 +339,7 @@ export function TaskEditor({
               onToggle={(event) => setDetailsOpen(event.currentTarget.open)}
               className="group rounded-md border border-[#e7e9ed] bg-[#fbfcfd]"
             >
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-[#49515e] [&::-webkit-details-marker]:hidden">
+              <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-[#49515e] [&::-webkit-details-marker]:hidden">
                 <span>Details</span>
                 <span className="flex min-w-0 items-center gap-2 text-[11px] font-normal text-[#858e9d]">
                   <span className="truncate">{detailsSummary}</span>

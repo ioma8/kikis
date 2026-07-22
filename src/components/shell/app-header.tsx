@@ -37,9 +37,7 @@ export function AppHeader() {
               <Link
                 key={link.path}
                 to={link.path}
-                className={
-                  location.pathname.startsWith(link.path) ? 'font-medium text-[#3e4652]' : ''
-                }
+                className={`rounded-md px-1.5 py-1 transition-colors hover:bg-[#f5f6f8] hover:text-[#3e4652] ${location.pathname.startsWith(link.path) ? 'bg-[#f5f6f8] font-medium text-[#3e4652]' : ''}`}
               >
                 {link.label}
               </Link>

@@ -70,8 +70,8 @@ export function ColumnMenu({
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-8 z-20 w-44 rounded-lg border border-[#e1e4e9] bg-white py-1 shadow-lg">
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-8 z-50 w-44 rounded-lg border border-[#e1e4e9] bg-white py-1 shadow-lg">
             {renaming ? (
               <form onSubmit={handleRename} className="px-2 py-1">
                 <input

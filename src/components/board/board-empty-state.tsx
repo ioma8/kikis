@@ -10,7 +10,7 @@ export function BoardEmptyState({ onAddTask }: { onAddTask?: () => void }) {
         <button
           type="button"
           onClick={onAddTask}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#5c61d9] px-4 py-2 text-sm font-medium text-white shadow-[0_3px_8px_rgba(92,97,217,0.2)] transition hover:bg-[#5055cf]"
+          className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-[#5c61d9] px-4 py-2 text-sm font-medium text-white shadow-[0_3px_8px_rgba(92,97,217,0.2)] transition hover:bg-[#5055cf]"
         >
           + New task
         </button>

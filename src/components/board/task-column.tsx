@@ -54,7 +54,7 @@ export function TaskColumn({
                   {...props}
                   type="button"
                   aria-label={`Move ${column.name} column`}
-                  className="grid size-6 place-items-center rounded-md text-[#9aa2ad] hover:bg-white hover:text-[#5c61d9]"
+                  className="grid size-8 place-items-center rounded-md text-[#9aa2ad] hover:bg-white hover:text-[#5c61d9] sm:size-6"
                 >
                   <GripVertical size={14} />
                 </button>
@@ -85,7 +85,7 @@ export function TaskColumn({
           <button
             type="button"
             onClick={onAddTask}
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-[#949ca8] transition hover:bg-white hover:text-[#5c61d9] focus:bg-white focus:text-[#5c61d9]"
+            className="flex min-h-9 w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-[#737d8b] transition hover:bg-white hover:text-[#5c61d9] focus:bg-white focus:text-[#5c61d9] sm:min-h-0 sm:py-1.5"
           >
             <Plus size={14} /> Add a task
           </button>

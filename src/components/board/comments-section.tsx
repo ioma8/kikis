@@ -95,7 +95,7 @@ export function CommentsSection({ cardId, collapsible = false }: CommentsSection
                     type="button"
                     onClick={() => handleDelete(comment.id)}
                     aria-label="Delete comment"
-                    className="grid size-4 place-items-center rounded text-[#bcc2cc] hover:text-[#b85c55]"
+                    className="grid size-8 place-items-center rounded text-[#9aa2ad] hover:text-[#b85c55] sm:size-5"
                   >
                     <Trash2 size={10} />
                   </button>

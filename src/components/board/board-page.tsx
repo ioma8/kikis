@@ -1,4 +1,4 @@
-import { Plus, ChevronDown } from 'lucide-react'
+import { Plus, ChevronDown, MoveHorizontal } from 'lucide-react'
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { Kanban, KanbanBoard, KanbanOverlay, type KanbanCommitMeta } from '@/components/reui/kanban'
@@ -591,13 +591,13 @@ export default function BoardPage() {
               {showBoardMenu && (
                 <>
                   <div
-                    className="fixed inset-0 z-10"
+                    className="fixed inset-0 z-40"
                     onClick={() => {
                       setShowBoardMenu(false)
                       setShowNewBoardInput(false)
                     }}
                   />
-                  <div className="absolute left-0 top-full z-20 mt-1 w-64 rounded-lg border border-[#e1e4e9] bg-white py-1 shadow-lg">
+                  <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-lg border border-[#e1e4e9] bg-white py-1 shadow-lg">
                     <div className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-[#9aa2ad]">
                       Boards
                     </div>
@@ -707,6 +707,7 @@ export default function BoardPage() {
         {actionError && (
           <div
             role="alert"
+            aria-live="polite"
             className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-[#f0d4a6] bg-[#fffaf0] px-3 py-2 text-xs text-[#8f6728]"
           >
             <span className="min-w-0 flex-1 break-words">{actionError}</span>
@@ -721,6 +722,12 @@ export default function BoardPage() {
         )}
 
         {totalCards === 0 && !hasFilters ? <BoardEmptyState onAddTask={handleNewTask} /> : null}
+
+        {columns.length > 1 && (
+          <p className="mb-2 inline-flex items-center gap-1.5 text-[11px] text-[#737d8b] sm:hidden">
+            <MoveHorizontal size={13} /> Swipe to view columns
+          </p>
+        )}
 
         <section id="board" className="overflow-x-auto overscroll-x-contain pb-4">
           <Kanban

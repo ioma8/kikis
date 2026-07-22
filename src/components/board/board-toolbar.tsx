@@ -22,7 +22,7 @@ export function BoardToolbar({
   onNewTask,
 }: BoardToolbarProps) {
   return (
-    <section className="mb-3 flex flex-col justify-between gap-2 rounded-lg border border-[#e3e6eb] bg-white p-2 sm:mb-4 sm:flex-row sm:items-center sm:rounded-xl sm:p-2.5">
+    <section className="sticky top-2 z-30 mb-3 flex flex-col justify-between gap-2 rounded-lg border border-[#e3e6eb] bg-white/95 p-2 shadow-[0_4px_14px_rgba(25,35,50,0.04)] backdrop-blur sm:mb-4 sm:flex-row sm:items-center sm:rounded-xl sm:p-2.5">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs text-[#7b8492]">
           <SlidersHorizontal size={14} /> Filter
