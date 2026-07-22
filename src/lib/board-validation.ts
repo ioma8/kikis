@@ -1,3 +1,5 @@
+import { descriptionToPlainText } from './description'
+
 export type ValidationError = {
   field: string
   message: string
@@ -15,7 +17,7 @@ export function validateCardTitle(title: string): ValidationError | null {
 }
 
 export function validateDescription(description: string): ValidationError | null {
-  if (description.length > 2000) {
+  if (descriptionToPlainText(description).length > 2000) {
     return { field: 'description', message: 'Description must be 2000 characters or fewer' }
   }
   return null

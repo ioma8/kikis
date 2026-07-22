@@ -173,8 +173,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signOut = useCallback(async () => {
-    const confirmed = window.confirm('Sign out of Kikis?')
-    if (!confirmed) return
     const { error } = await supabase.auth.signOut()
     if (error) throw error
   }, [])

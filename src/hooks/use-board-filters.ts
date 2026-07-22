@@ -1,6 +1,7 @@
 import { useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { BoardFilters, Card } from '@/types/board'
+import { descriptionToPlainText } from '@/lib/description'
 import { useDebouncedValue } from './use-debounced-value'
 
 function parseFilters(params: URLSearchParams): BoardFilters {
@@ -62,7 +63,12 @@ export function useBoardFilters() {
     (cards: Card[]): Card[] => {
       const q = debouncedQuery.trim().toLowerCase()
       return cards.filter((card) => {
-        if (q && !`${card.title} ${card.project} ${card.description}`.toLowerCase().includes(q)) {
+        if (
+          q &&
+          !`${card.title} ${card.project} ${descriptionToPlainText(card.description)}`
+            .toLowerCase()
+            .includes(q)
+        ) {
           return false
         }
         if (filters.project && card.project !== filters.project) return false

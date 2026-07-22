@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react'
 import { addComment, fetchComments, deleteComment } from '@/lib/board-mutations'
 import type { Comment } from '@/types/board'
 import { useAuth } from '@/lib/auth-context'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 interface CommentsSectionProps {
   cardId: string
@@ -15,6 +16,7 @@ export function CommentsSection({ cardId }: CommentsSectionProps) {
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -54,13 +56,18 @@ export function CommentsSection({ cardId }: CommentsSectionProps) {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this comment?')) return
+  const handleDelete = (id: string) => {
+    setDeleteCommentId(id)
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteCommentId) return
     try {
-      await deleteComment(id)
-      setComments((prev) => prev.filter((c) => c.id !== id))
+      await deleteComment(deleteCommentId)
+      setComments((prev) => prev.filter((c) => c.id !== deleteCommentId))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete comment')
+      throw err
     }
   }
 
@@ -79,7 +86,7 @@ export function CommentsSection({ cardId }: CommentsSectionProps) {
       ) : comments.length === 0 ? (
         <p className="mb-3 text-[11px] text-[#9aa2ad]">No comments yet.</p>
       ) : (
-        <div className="mb-3 max-h-48 space-y-2 overflow-y-auto">
+        <div className="mb-3 space-y-2">
           {comments.map((comment) => (
             <div key={comment.id} className="rounded-md bg-[#f8f9fb] px-3 py-2">
               <div className="flex items-center justify-between">
@@ -118,6 +125,17 @@ export function CommentsSection({ cardId }: CommentsSectionProps) {
           {sending ? '…' : 'Send'}
         </button>
       </form>
+      <ConfirmDialog
+        open={deleteCommentId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteCommentId(null)
+        }}
+        title="Delete comment?"
+        description="This comment will be permanently deleted."
+        confirmLabel="Delete comment"
+        destructive
+        onConfirm={confirmDelete}
+      />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { X } from 'lucide-react'
 import { KanbanItem, KanbanItemHandle } from '@/components/reui/kanban'
 import type { Card } from '@/types/board'
+import { getDescriptionExcerpt } from '@/lib/description'
 
 const priorityClass: Record<string, string> = {
   high: 'border-[#f2c6c2] bg-[#fff5f4] text-[#b85c55]',
@@ -22,6 +23,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ card, isOverlay = false, onSelect, onArchive }: TaskCardProps) {
+  const descriptionExcerpt = getDescriptionExcerpt(card.description)
   const content = (
     <article
       role="button"
@@ -56,6 +58,11 @@ export function TaskCard({ card, isOverlay = false, onSelect, onArchive }: TaskC
       <div className="mb-3 flex items-center gap-1.5 text-[11px] text-[#9199a5]">
         {card.project}
       </div>
+      {descriptionExcerpt && (
+        <p className="mb-3 line-clamp-2 text-[11px] leading-4 text-[#6f7886]">
+          {descriptionExcerpt}
+        </p>
+      )}
       <div className="flex items-center justify-between border-t border-[#f0f1f3] pt-2.5 text-[11px] text-[#9aa2ad]">
         {card.due_date && <span>{card.due_date}</span>}
       </div>

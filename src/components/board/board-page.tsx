@@ -8,6 +8,8 @@ import { TaskColumn } from './task-column'
 import { TaskCard } from './task-card'
 import { TaskEditor } from './task-editor'
 import { BoardEmptyState } from './board-empty-state'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { descriptionToPlainText } from '@/lib/description'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { supabase } from '@/lib/supabase'
 import {
@@ -54,6 +56,7 @@ export default function BoardPage() {
   const [showNewBoardInput, setShowNewBoardInput] = useState(false)
   const [newBoardName, setNewBoardName] = useState('')
   const [creatingBoard, setCreatingBoard] = useState(false)
+  const [pendingColumnDelete, setPendingColumnDelete] = useState<string | null>(null)
 
   // Search / filter state from URL
   const rawQuery = searchParams.get('q') ?? ''
@@ -215,7 +218,12 @@ export default function BoardPage() {
       Object.entries(board).map(([colId, cards]) => [
         colId,
         cards.filter((card) => {
-          if (q && !`${card.title} ${card.project} ${card.description}`.toLowerCase().includes(q))
+          if (
+            q &&
+            !`${card.title} ${card.project} ${descriptionToPlainText(card.description)}`
+              .toLowerCase()
+              .includes(q)
+          )
             return false
           if (selectedProject && card.project !== selectedProject) return false
           return true
@@ -339,24 +347,25 @@ export default function BoardPage() {
     setEditorOpen(true)
   }, [])
 
-  const handleSaved = useCallback(
-    (savedCard: Card) => {
-      setBoard((prev) => {
-        if (editingCard) {
-          const next: KanbanValue = {}
-          for (const colId of Object.keys(prev)) {
-            next[colId] = prev[colId].map((c) => (c.id === savedCard.id ? savedCard : c))
-          }
-          return next
+  const handleSaved = useCallback((savedCard: Card) => {
+    setBoard((prev) => {
+      const cardAlreadyOnBoard = Object.values(prev).some((cards) =>
+        cards.some((card) => card.id === savedCard.id),
+      )
+
+      if (cardAlreadyOnBoard) {
+        const next: KanbanValue = {}
+        for (const colId of Object.keys(prev)) {
+          next[colId] = prev[colId].map((c) => (c.id === savedCard.id ? savedCard : c))
         }
-        const colId = savedCard.column_id
-        const next = { ...prev }
-        next[colId] = [...(next[colId] ?? []), savedCard]
         return next
-      })
-    },
-    [editingCard],
-  )
+      }
+      const colId = savedCard.column_id
+      const next = { ...prev }
+      next[colId] = [...(next[colId] ?? []), savedCard]
+      return next
+    })
+  }, [])
 
   // ── Column operations ──
 
@@ -399,57 +408,75 @@ export default function BoardPage() {
     [board],
   )
 
-  const handleDeleteColumn = useCallback(
+  const deleteColumn = useCallback(
     async (id: string) => {
       const colCards = board[id] ?? []
       const otherCol = columns.find((c) => c.id !== id && !c.archived_at)
       const otherCards = otherCol ? (board[otherCol.id] ?? []) : []
       const otherLastPosition = otherCards.reduce((max, card) => Math.max(max, card.position), 0)
-      try {
-        if (colCards.length > 0) {
-          if (otherCol) {
-            if (
-              !window.confirm(
-                `Move ${colCards.length} card(s) to "${otherCol.name}" and delete column?`,
-              )
-            )
-              return
-            const updates = colCards.map((card, i) =>
-              updateCard(card.id, {
-                column_id: otherCol.id,
-                position: otherLastPosition + (i + 1) * 1_000_000,
-              }),
-            )
-            await Promise.all(updates)
-          } else {
-            setActionError(
-              'Cannot delete the only non-empty column. Move or archive its cards first.',
-            )
-            return
-          }
-        }
-        await deleteColumnMutation(id)
-        setBoard((prev) => {
-          const next = { ...prev }
-          delete next[id]
-          if (otherCol && colCards.length > 0) {
-            const moved = colCards.map((card, i) => ({
-              ...card,
-              column_id: otherCol.id,
-              position: otherLastPosition + (i + 1) * 1_000_000,
-            }))
-            next[otherCol.id] = [...(next[otherCol.id] ?? []), ...moved]
-            next[otherCol.id].sort((a, b) => a.position - b.position)
-          }
-          return next
-        })
-        setColumns((prev) => prev.filter((c) => c.id !== id))
-      } catch (err) {
-        setActionError(err instanceof Error ? err.message : 'Failed to delete column')
+
+      if (colCards.length > 0 && !otherCol) {
+        throw new Error('Cannot delete the only non-empty column. Move or archive its cards first.')
       }
+
+      if (colCards.length > 0 && otherCol) {
+        const updates = colCards.map((card, i) =>
+          updateCard(card.id, {
+            column_id: otherCol.id,
+            position: otherLastPosition + (i + 1) * 1_000_000,
+          }),
+        )
+        await Promise.all(updates)
+      }
+
+      await deleteColumnMutation(id)
+      setBoard((prev) => {
+        const next = { ...prev }
+        delete next[id]
+        if (otherCol && colCards.length > 0) {
+          const moved = colCards.map((card, i) => ({
+            ...card,
+            column_id: otherCol.id,
+            position: otherLastPosition + (i + 1) * 1_000_000,
+          }))
+          next[otherCol.id] = [...(next[otherCol.id] ?? []), ...moved]
+          next[otherCol.id].sort((a, b) => a.position - b.position)
+        }
+        return next
+      })
+      setColumns((prev) => prev.filter((c) => c.id !== id))
     },
     [board, columns],
   )
+
+  const handleDeleteColumn = useCallback(
+    (id: string) => {
+      const colCards = board[id] ?? []
+      const otherCol = columns.find((c) => c.id !== id && !c.archived_at)
+      if (colCards.length > 0 && otherCol) {
+        setPendingColumnDelete(id)
+        return
+      }
+      if (colCards.length > 0 && !otherCol) {
+        setActionError('Cannot delete the only non-empty column. Move or archive its cards first.')
+        return
+      }
+      void deleteColumn(id).catch((err) => {
+        setActionError(err instanceof Error ? err.message : 'Failed to delete column')
+      })
+    },
+    [board, columns, deleteColumn],
+  )
+
+  const confirmDeleteColumn = useCallback(async () => {
+    if (!pendingColumnDelete) return
+    try {
+      await deleteColumn(pendingColumnDelete)
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to delete column')
+      throw err
+    }
+  }, [deleteColumn, pendingColumnDelete])
 
   const handleAddColumn = useCallback(async () => {
     if (!boardId) return
@@ -481,6 +508,11 @@ export default function BoardPage() {
     const lastPosition = cards.reduce((max, card) => Math.max(max, card.position), 0)
     return lastPosition + 1_000_000
   }, [board, editorColumnId])
+
+  const pendingColumn = pendingColumnDelete
+    ? columns.find((column) => column.id === pendingColumnDelete)
+    : undefined
+  const pendingColumnCardCount = pendingColumnDelete ? (board[pendingColumnDelete] ?? []).length : 0
 
   // ── Render ──
 
@@ -748,6 +780,17 @@ export default function BoardPage() {
         card={editingCard}
         position={newCardPosition}
         onSaved={handleSaved}
+      />
+      <ConfirmDialog
+        open={pendingColumnDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingColumnDelete(null)
+        }}
+        title={`Delete "${pendingColumn?.name ?? 'column'}"?`}
+        description={`Move ${pendingColumnCardCount} card(s) to another column and delete this column?`}
+        confirmLabel="Move and delete"
+        destructive
+        onConfirm={confirmDeleteColumn}
       />
     </div>
   )

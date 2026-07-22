@@ -161,3 +161,36 @@ button {
     @apply font-sans;
   }
 }
+
+.tiptap ul[data-type='taskList'] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.tiptap li[data-checked] {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.tiptap li[data-checked] > label {
+  display: flex;
+  flex: 0 0 auto;
+  margin-top: 0.25rem;
+}
+
+.tiptap li[data-checked] > label > input {
+  width: 0.875rem;
+  height: 0.875rem;
+  accent-color: #5c61d9;
+}
+
+.tiptap li[data-checked] > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.tiptap li[data-checked='true'] > div {
+  color: #9aa2ad;
+  text-decoration: line-through;
+}

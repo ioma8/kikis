@@ -3,12 +3,14 @@ import { Trash2, RotateCcw } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { restoreCard, deleteCard } from '@/lib/board-mutations'
 import { AppHeader } from '@/components/shell/app-header'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import type { Card } from '@/types/board'
 
 export function ArchivePage() {
   const [archivedCards, setArchivedCards] = useState<Card[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleteCardId, setDeleteCardId] = useState<string | null>(null)
 
   const loadArchived = useCallback(async () => {
     setLoading(true)
@@ -52,14 +54,18 @@ export function ArchivePage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    const confirmed = window.confirm('Permanently delete this card? This cannot be undone.')
-    if (!confirmed) return
+  const handleDelete = (id: string) => {
+    setDeleteCardId(id)
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteCardId) return
     try {
-      await deleteCard(id)
-      setArchivedCards((prev) => prev.filter((c) => c.id !== id))
+      await deleteCard(deleteCardId)
+      setArchivedCards((prev) => prev.filter((c) => c.id !== deleteCardId))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete card')
+      throw err
     }
   }
 
@@ -138,6 +144,17 @@ export function ArchivePage() {
           </div>
         )}
       </main>
+      <ConfirmDialog
+        open={deleteCardId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteCardId(null)
+        }}
+        title="Delete archived card?"
+        description="Permanently delete this card? This cannot be undone."
+        confirmLabel="Delete card"
+        destructive
+        onConfirm={confirmDelete}
+      />
     </div>
   )
 }

@@ -3,7 +3,6 @@ import { MoreHorizontal, Trash2, Archive, Palette, Edit3, X } from 'lucide-react
 
 interface ColumnMenuProps {
   columnName: string
-  cardCount: number
   onRename: (name: string) => void
   onChangeColor: (color: string) => void
   onArchive: () => void
@@ -23,7 +22,6 @@ const PRESET_COLORS = [
 
 export function ColumnMenu({
   columnName,
-  cardCount,
   onRename,
   onChangeColor,
   onArchive,
@@ -56,12 +54,6 @@ export function ColumnMenu({
   }
 
   const handleDelete = () => {
-    if (cardCount > 0) {
-      const confirmed = window.confirm(
-        `"${columnName}" has ${cardCount} card(s). Move or archive them first, or confirm deletion.`,
-      )
-      if (!confirmed) return
-    }
     onDelete()
     setOpen(false)
   }

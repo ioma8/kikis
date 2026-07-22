@@ -58,7 +58,6 @@ export function TaskColumn({
             />
             <ColumnMenu
               columnName={column.name}
-              cardCount={cards.length}
               onRename={(name) => onRenameColumn?.(column.id, name)}
               onChangeColor={(color) => onChangeColumnColor?.(column.id, color)}
               onArchive={() => onArchiveColumn?.(column.id)}
