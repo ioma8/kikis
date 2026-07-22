@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Editor } from '@tiptap/core'
 import { EditorContent, useEditor } from '@tiptap/react'
 import FileHandler from '@tiptap/extension-file-handler'
@@ -16,6 +16,14 @@ import {
   Underline,
 } from 'lucide-react'
 import { TaskItem, TaskList } from '@tiptap/extension-list'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { descriptionToEditorHtml, sanitizeDescriptionHtml } from '@/lib/description'
 
 interface RichTextEditorProps {
@@ -30,6 +38,11 @@ interface ToolbarButtonProps {
   active?: boolean
   onClick: () => void
   children: ReactNode
+}
+
+type LightboxImage = {
+  src: string
+  alt: string
 }
 
 function ToolbarButton({ label, active = false, onClick, children }: ToolbarButtonProps) {
@@ -85,6 +98,7 @@ async function insertImageFiles(editor: Editor, files: File[], position?: number
 
 export function RichTextEditor({ id, value, onChange, disabled = false }: RichTextEditorProps) {
   const imageInputRef = useRef<HTMLInputElement>(null)
+  const [lightboxImage, setLightboxImage] = useState<LightboxImage | null>(null)
   const editor = useEditor({
     immediatelyRender: false,
     editable: !disabled,
@@ -137,6 +151,15 @@ export function RichTextEditor({ id, value, onChange, disabled = false }: RichTe
       attributes: {
         class:
           'tiptap min-h-52 px-3 py-3 text-sm leading-5 text-[#515966] outline-none [&_a]:text-[#5c61d9] [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-[#dfe2e7] [&_blockquote]:pl-3 [&_code]:rounded [&_code]:bg-[#f0f1f3] [&_code]:px-1 [&_code]:text-[12px] [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_li]:ml-4 [&_ol]:list-decimal [&_p]:mb-2 [&_p:last-child]:mb-0 [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-[#f5f6f8] [&_pre]:p-2 [&_ul]:list-disc',
+      },
+      handleClick: (_view, _position, event) => {
+        if (!(event.target instanceof HTMLImageElement)) return false
+
+        setLightboxImage({
+          src: event.target.currentSrc || event.target.src,
+          alt: event.target.alt || 'Image preview',
+        })
+        return true
       },
     },
   })
@@ -230,6 +253,37 @@ export function RichTextEditor({ id, value, onChange, disabled = false }: RichTe
         }}
       />
       <EditorContent editor={editor} />
+      <Dialog
+        open={lightboxImage !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setLightboxImage(null)
+        }}
+      >
+        <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] p-2 sm:p-3">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Image preview</DialogTitle>
+            <DialogDescription>Full-size image preview.</DialogDescription>
+          </DialogHeader>
+          <DialogClose
+            type="button"
+            aria-label="Close image preview"
+            className="absolute right-3 top-3 z-10 grid size-8 place-items-center rounded-full bg-black/50 text-white transition hover:bg-black/70"
+          >
+            <span aria-hidden="true" className="text-xl leading-none">
+              ×
+            </span>
+          </DialogClose>
+          {lightboxImage && (
+            <div className="flex max-h-[calc(100dvh-3rem)] min-h-0 items-center justify-center overflow-auto">
+              <img
+                src={lightboxImage.src}
+                alt={lightboxImage.alt}
+                className="max-h-[calc(100dvh-3rem)] max-w-full object-contain"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
