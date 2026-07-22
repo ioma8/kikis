@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { updateCard, calculatePosition, MIN_POSITION_GAP, compactPositions } from '@/lib/board-mutations'
-import type { Card, BoardColumn, Board, KanbanValue, BoardSnapshot } from '@/types/board'
+import { updateCard, compactPositions } from '@/lib/board-mutations'
+import type { BoardColumn, Board, KanbanValue, BoardSnapshot } from '@/types/board'
 import type { BoardQueryResult } from '@/types/database'
 
 type UseBoardState = {
@@ -44,9 +44,7 @@ function normalizeBoardQuery(data: BoardQueryResult): {
     cards[colId].sort((a, b) => a.position - b.position)
   }
 
-  const columns = data.columns
-    .filter((c) => !c.archived_at)
-    .sort((a, b) => a.position - b.position)
+  const columns = data.columns.filter((c) => !c.archived_at).sort((a, b) => a.position - b.position)
 
   const board: Board = data.board
 
@@ -63,8 +61,10 @@ export function useBoard(boardId?: string): [UseBoardState, UseBoardActions] {
     kanbanValue: EMPTY_CARDS,
   })
   const snapshotRef = useRef<BoardSnapshot | null>(null)
+  const loadRequestRef = useRef(0)
 
   const loadBoard = useCallback(async (id: string) => {
+    const requestId = ++loadRequestRef.current
     setState((prev) => ({ ...prev, loading: true, error: null }))
     try {
       const { data: board, error: boardError } = await supabase
@@ -90,7 +90,11 @@ export function useBoard(boardId?: string): [UseBoardState, UseBoardActions] {
         .order('position', { ascending: true })
       if (cardError) throw cardError
 
-      const { board: b, columns: cols, cards: cardMap } = normalizeBoardQuery({
+      const {
+        board: b,
+        columns: cols,
+        cards: cardMap,
+      } = normalizeBoardQuery({
         board,
         columns: columns ?? [],
         cards: cards ?? [],
@@ -103,8 +107,17 @@ export function useBoard(boardId?: string): [UseBoardState, UseBoardActions] {
         kanbanValue[col.id] = cardMap[col.id] ?? []
       }
 
-      setState({ loading: false, error: null, board: b, columns: cols, cards: cardMap, kanbanValue })
+      if (requestId !== loadRequestRef.current) return
+      setState({
+        loading: false,
+        error: null,
+        board: b,
+        columns: cols,
+        cards: cardMap,
+        kanbanValue,
+      })
     } catch (err) {
+      if (requestId !== loadRequestRef.current) return
       setState((prev) => ({
         ...prev,
         loading: false,
@@ -130,79 +143,53 @@ export function useBoard(boardId?: string): [UseBoardState, UseBoardActions] {
     setState((prev) => ({ ...prev, kanbanValue: next }))
   }, [])
 
-  const onValueCommit = useCallback(
-    async (next: KanbanValue) => {
-      const prev = snapshotRef.current
-      if (!prev) return
-      const movedCardIds: string[] = []
-      for (const colId of Object.keys(next)) {
-        const cards = next[colId]
-        for (let i = 0; i < cards.length; i++) {
-          const card = cards[i]
-          const prevCard = Object.values(prev.cards).flat().find((c) => c.id === card.id)
-          if (!prevCard) {
-            movedCardIds.push(card.id)
-          } else if (prevCard.column_id !== card.column_id || prevCard.position !== card.position) {
-            movedCardIds.push(card.id)
-          }
-        }
+  const onValueCommit = useCallback(async (next: KanbanValue) => {
+    const prev = snapshotRef.current
+    if (!prev) return
+    const hasChanged =
+      Object.keys(prev.cards).some((columnId) => {
+        const before = prev.cards[columnId] ?? []
+        const after = next[columnId] ?? []
+        return (
+          before.length !== after.length ||
+          before.some((card, index) => card.id !== after[index]?.id)
+        )
+      }) || Object.keys(next).some((columnId) => !(columnId in prev.cards))
+    if (!hasChanged) return
+
+    const updates: Promise<unknown>[] = []
+    const positionsById = new Map<string, number>()
+    for (const [columnId, cards] of Object.entries(next)) {
+      const positions = compactPositions(cards.map(() => 0))
+      for (let index = 0; index < cards.length; index++) {
+        const card = cards[index]
+        positionsById.set(card.id, positions[index])
+        updates.push(updateCard(card.id, { position: positions[index], column_id: columnId }))
       }
+    }
 
-      const columnCards = new Map<string, Card[]>()
-      for (const colId of Object.keys(next)) {
-        columnCards.set(colId, next[colId])
-      }
-
-      const updates: Promise<unknown>[] = []
-      for (const cardId of movedCardIds) {
-        let movedCard: Card | undefined
-        let newColId = ''
-        let newIndex = -1
-        for (const [colId, cards] of columnCards.entries()) {
-          const idx = cards.findIndex((c) => c.id === cardId)
-          if (idx >= 0) {
-            movedCard = cards[idx]
-            newColId = colId
-            newIndex = idx
-            break
-          }
-        }
-        if (!movedCard) continue
-
-        const columnCardsArray = columnCards.get(newColId) ?? []
-        const before = columnCardsArray[newIndex - 1]?.position ?? null
-        const after = columnCardsArray[newIndex + 1]?.position ?? null
-
-        const position = calculatePosition(before, after)
-        const gap = after !== null ? after - position : MIN_POSITION_GAP
-
-        if (gap < MIN_POSITION_GAP) {
-          const positions = compactPositions(columnCardsArray.map(() => 0))
-          for (let i = 0; i < columnCardsArray.length; i++) {
-            const c = columnCardsArray[i]
-            updates.push(updateCard(c.id, { position: positions[i], column_id: c.column_id }))
-          }
-        } else {
-          updates.push(updateCard(movedCard.id, { position, column_id: newColId }))
-        }
-      }
-
-      if (updates.length > 0) {
-        try {
-          await Promise.all(updates)
-          setState((prev) => ({
-            ...prev,
-            cards: next,
-            kanbanValue: next,
-          }))
-        } catch (err) {
-          console.error('Failed to persist card move:', err)
-          throw err
-        }
-      }
-    },
-    [],
-  )
+    try {
+      await Promise.all(updates)
+      const normalized: KanbanValue = Object.fromEntries(
+        Object.entries(next).map(([columnId, cards]) => [
+          columnId,
+          cards.map((card) => ({
+            ...card,
+            column_id: columnId,
+            position: positionsById.get(card.id) ?? card.position,
+          })),
+        ]),
+      )
+      setState((current) => ({
+        ...current,
+        cards: normalized,
+        kanbanValue: normalized,
+      }))
+    } catch (err) {
+      console.error('Failed to persist card move:', err)
+      throw err
+    }
+  }, [])
 
   const onPersistenceError = useCallback(() => {
     // Restore the snapshot
@@ -210,7 +197,8 @@ export function useBoard(boardId?: string): [UseBoardState, UseBoardActions] {
     if (snap) {
       setState((prev) => ({
         ...prev,
-        kanbanValue: prev.cards,
+        cards: snap.cards,
+        kanbanValue: snap.cards,
       }))
     }
   }, [])

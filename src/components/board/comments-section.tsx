@@ -2,26 +2,41 @@ import { useState, useEffect, type FormEvent } from 'react'
 import { Trash2 } from 'lucide-react'
 import { addComment, fetchComments, deleteComment } from '@/lib/board-mutations'
 import type { Comment } from '@/types/board'
+import { useAuth } from '@/lib/auth-context'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 interface CommentsSectionProps {
   cardId: string
 }
 
 export function CommentsSection({ cardId }: CommentsSectionProps) {
+  const { user } = useAuth()
   const [comments, setComments] = useState<Comment[]>([])
   const [content, setContent] = useState('')
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
-    fetchComments(cardId).then((data) => {
-      if (!cancelled) {
-        setComments(data)
-        setLoading(false)
-      }
-    }).catch(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
+    fetchComments(cardId)
+      .then((data) => {
+        if (!cancelled) {
+          setComments(data)
+          setError(null)
+          setLoading(false)
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load comments')
+          setLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
   }, [cardId])
 
   const handleSubmit = async (e: FormEvent) => {
@@ -29,23 +44,30 @@ export function CommentsSection({ cardId }: CommentsSectionProps) {
     const trimmed = content.trim()
     if (!trimmed) return
     setSending(true)
+    setError(null)
     try {
-      const newComment = await addComment(cardId, trimmed) as Comment
+      const newComment = (await addComment(cardId, trimmed)) as Comment
       setComments((prev) => [...prev, { ...newComment, author_name: 'You' }])
       setContent('')
     } catch (err) {
-      console.error('Failed to add comment:', err)
+      setError(err instanceof Error ? err.message : 'Failed to add comment')
+    } finally {
+      setSending(false)
     }
-    setSending(false)
   }
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this comment?')) return
+  const handleDelete = (id: string) => {
+    setDeleteCommentId(id)
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteCommentId) return
     try {
-      await deleteComment(id)
-      setComments((prev) => prev.filter((c) => c.id !== id))
+      await deleteComment(deleteCommentId)
+      setComments((prev) => prev.filter((c) => c.id !== deleteCommentId))
     } catch (err) {
-      console.error('Failed to delete comment:', err)
+      setError(err instanceof Error ? err.message : 'Failed to delete comment')
+      throw err
     }
   }
 
@@ -57,24 +79,30 @@ export function CommentsSection({ cardId }: CommentsSectionProps) {
 
       {loading ? (
         <p className="text-[11px] text-[#9aa2ad]">Loading comments…</p>
+      ) : error ? (
+        <p role="alert" className="mb-3 text-[11px] text-[#b85c55]">
+          {error}
+        </p>
       ) : comments.length === 0 ? (
         <p className="mb-3 text-[11px] text-[#9aa2ad]">No comments yet.</p>
       ) : (
-        <div className="mb-3 max-h-48 space-y-2 overflow-y-auto">
+        <div className="mb-3 space-y-2">
           {comments.map((comment) => (
             <div key={comment.id} className="rounded-md bg-[#f8f9fb] px-3 py-2">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-medium text-[#6f7886]">
                   {comment.author_name ?? 'Unknown'}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(comment.id)}
-                  aria-label="Delete comment"
-                  className="grid size-4 place-items-center rounded text-[#bcc2cc] hover:text-[#b85c55]"
-                >
-                  <Trash2 size={10} />
-                </button>
+                {comment.author_id === user?.id && (
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(comment.id)}
+                    aria-label="Delete comment"
+                    className="grid size-4 place-items-center rounded text-[#bcc2cc] hover:text-[#b85c55]"
+                  >
+                    <Trash2 size={10} />
+                  </button>
+                )}
               </div>
               <p className="mt-0.5 text-[12px] leading-4 text-[#343b46]">{comment.content}</p>
             </div>
@@ -97,6 +125,17 @@ export function CommentsSection({ cardId }: CommentsSectionProps) {
           {sending ? '…' : 'Send'}
         </button>
       </form>
+      <ConfirmDialog
+        open={deleteCommentId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteCommentId(null)
+        }}
+        title="Delete comment?"
+        description="This comment will be permanently deleted."
+        confirmLabel="Delete comment"
+        destructive
+        onConfirm={confirmDelete}
+      />
     </div>
   )
 }

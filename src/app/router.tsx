@@ -12,9 +12,30 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/board" replace /> },
       { path: 'login', element: <LoginPage /> },
-      { path: 'board', element: <AuthGate><BoardPage /></AuthGate> },
-      { path: 'board/:boardId', element: <AuthGate><BoardPage /></AuthGate> },
-      { path: 'archive', element: <AuthGate><ArchivePage /></AuthGate> },
+      {
+        path: 'board',
+        element: (
+          <AuthGate>
+            <BoardPage />
+          </AuthGate>
+        ),
+      },
+      {
+        path: 'board/:boardId',
+        element: (
+          <AuthGate>
+            <BoardPage />
+          </AuthGate>
+        ),
+      },
+      {
+        path: 'archive',
+        element: (
+          <AuthGate>
+            <ArchivePage />
+          </AuthGate>
+        ),
+      },
       { path: '*', element: <NotFound /> },
     ],
   },

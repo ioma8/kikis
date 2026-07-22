@@ -1,13 +1,19 @@
 import { useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import type { BoardFilters, Priority, Card } from '@/types/board'
+import type { BoardFilters, Card } from '@/types/board'
+import { descriptionToPlainText } from '@/lib/description'
 import { useDebouncedValue } from './use-debounced-value'
 
 function parseFilters(params: URLSearchParams): BoardFilters {
+  const priorityParam = params.get('priority')
+  const priority =
+    priorityParam === 'low' || priorityParam === 'medium' || priorityParam === 'high'
+      ? priorityParam
+      : null
   return {
     query: params.get('q') ?? '',
     project: params.get('project'),
-    priority: (params.get('priority') as Priority | null) ?? null,
+    priority,
     assigneeId: params.get('assignee') ?? null,
   }
 }
@@ -47,7 +53,8 @@ export function useBoardFilters() {
     setSearchParams({}, { replace: true })
   }, [setSearchParams])
 
-  const hasFilters = rawFilters.query !== '' ||
+  const hasFilters =
+    rawFilters.query !== '' ||
     rawFilters.project !== null ||
     rawFilters.priority !== null ||
     rawFilters.assigneeId !== null
@@ -56,7 +63,12 @@ export function useBoardFilters() {
     (cards: Card[]): Card[] => {
       const q = debouncedQuery.trim().toLowerCase()
       return cards.filter((card) => {
-        if (q && !`${card.title} ${card.project} ${card.description}`.toLowerCase().includes(q)) {
+        if (
+          q &&
+          !`${card.title} ${card.project} ${descriptionToPlainText(card.description)}`
+            .toLowerCase()
+            .includes(q)
+        ) {
           return false
         }
         if (filters.project && card.project !== filters.project) return false

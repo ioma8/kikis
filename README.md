@@ -23,7 +23,7 @@ Never put a Supabase service-role key in the Vite client. RLS policies are the a
 
 1. Create a Supabase project at [supabase.com](https://supabase.com).
 2. Go to **Project Settings > API** and copy the URL and anon key to your `.env` file.
-3. Run the migrations in `supabase/migrations/001_initial.sql` against your Supabase database (SQL Editor or `supabase migration up`).
+3. Run every file in `supabase/migrations/` in filename order against your Supabase database (or link the project and run `supabase db push`). The later migrations contain the RLS, comments, bootstrap, and card-integrity fixes required by the current app.
 4. Enable the **Magic Link** auth provider in **Authentication > Providers > Email**.
 5. (Optional) Turn off "Confirm email" in Email provider settings for a frictionless sign-in.
 

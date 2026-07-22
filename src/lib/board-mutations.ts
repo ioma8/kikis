@@ -1,14 +1,17 @@
 import { supabase } from './supabase'
-import type { Card, CardInsert, CardUpdate, ColumnInsert, ColumnUpdate, Comment } from '@/types/database'
+import type {
+  Card,
+  CardInsert,
+  CardUpdate,
+  ColumnInsert,
+  ColumnUpdate,
+  Comment,
+} from '@/types/database'
 
 // ── Card mutations ──
 
 export async function createCard(card: CardInsert): Promise<Card> {
-  const { data, error } = await supabase
-    .from('cards')
-    .insert(card)
-    .select('*')
-    .single()
+  const { data, error } = await supabase.from('cards').insert(card).select('*').single()
   if (error) throw error
   return data
 }
@@ -33,35 +36,24 @@ export async function archiveCard(id: string): Promise<void> {
 }
 
 export async function restoreCard(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('cards')
-    .update({ archived_at: null })
-    .eq('id', id)
+  const { error } = await supabase.from('cards').update({ archived_at: null }).eq('id', id)
   if (error) throw error
 }
 
 export async function deleteCard(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('cards')
-    .delete()
-    .eq('id', id)
+  const { error } = await supabase.from('cards').delete().eq('id', id)
   if (error) throw error
 }
 
 // ── Column mutations ──
 
 export async function createColumn(column: ColumnInsert): Promise<void> {
-  const { error } = await supabase
-    .from('columns')
-    .insert(column)
+  const { error } = await supabase.from('columns').insert(column)
   if (error) throw error
 }
 
 export async function updateColumn(id: string, updates: ColumnUpdate): Promise<void> {
-  const { error } = await supabase
-    .from('columns')
-    .update(updates)
-    .eq('id', id)
+  const { error } = await supabase.from('columns').update(updates).eq('id', id)
   if (error) throw error
 }
 
@@ -74,10 +66,7 @@ export async function archiveColumn(id: string): Promise<void> {
 }
 
 export async function deleteColumn(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('columns')
-    .delete()
-    .eq('id', id)
+  const { error } = await supabase.from('columns').delete().eq('id', id)
   if (error) throw error
 }
 
@@ -89,9 +78,9 @@ export async function deleteColumn(id: string): Promise<void> {
  */
 export function calculatePosition(before: number | null, after: number | null): number {
   if (before === null && after === null) return 1_000_000
-  if (before === null) return Math.floor((after ?? 0) / 2)
-  if (after === null) return Math.floor(before + 1_000_000)
-  return Math.floor((before + after) / 2)
+  if (before === null) return (after ?? 0) / 2
+  if (after === null) return before + 1_000_000
+  return before + (after - before) / 2
 }
 
 /**
@@ -113,7 +102,11 @@ const DEFAULT_COLUMNS = [
   { name: 'Done', color: '#68af87' },
 ]
 
-export async function createBoard(workspaceId: string, name: string, withDefaults = true): Promise<string> {
+export async function createBoard(
+  workspaceId: string,
+  name: string,
+  withDefaults = true,
+): Promise<string> {
   const { data: board, error: boardErr } = await supabase
     .from('boards')
     .insert({ workspace_id: workspaceId, name })
@@ -129,34 +122,29 @@ export async function createBoard(workspaceId: string, name: string, withDefault
       color: col.color,
     }))
     const { error: colErr } = await supabase.from('columns').insert(columns)
-    if (colErr) throw colErr
+    if (colErr) {
+      // Do not leave an unusable board behind when its default columns fail.
+      await supabase.from('boards').delete().eq('id', board.id)
+      throw colErr
+    }
   }
 
   return board.id
 }
 
-export async function fetchWorkspaceId(): Promise<string | null> {
-  const { data, error } = await supabase
-    .from('workspaces')
-    .select('id')
-    .limit(1)
-  if (error) throw error
-  return data?.[0]?.id ?? null
-}
-
 // ── Comment mutations ──
 
 export async function addComment(cardId: string, content: string): Promise<Comment> {
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .limit(1)
-    .single()
-  if (!profile) throw new Error('Not authenticated')
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+  if (userError) throw userError
+  if (!user) throw new Error('Not authenticated')
 
   const { data, error } = await supabase
     .from('comments')
-    .insert({ card_id: cardId, author_id: profile.id, content: content.trim() })
+    .insert({ card_id: cardId, author_id: user.id, content: content.trim() })
     .select('*')
     .single()
   if (error) throw error
@@ -171,8 +159,8 @@ export async function fetchComments(cardId: string): Promise<Comment[]> {
     .order('created_at', { ascending: true })
   if (error) throw error
   return (data ?? []).map((c: Record<string, unknown>) => ({
-    ...c as Omit<Comment, 'author_name'>,
-    author_name: (c.profiles as Record<string, unknown>)?.['display_name'] as string ?? 'Unknown',
+    ...(c as Omit<Comment, 'author_name'>),
+    author_name: ((c.profiles as Record<string, unknown>)?.['display_name'] as string) ?? 'Unknown',
   }))
 }
 

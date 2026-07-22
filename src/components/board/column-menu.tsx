@@ -3,7 +3,6 @@ import { MoreHorizontal, Trash2, Archive, Palette, Edit3, X } from 'lucide-react
 
 interface ColumnMenuProps {
   columnName: string
-  cardCount: number
   onRename: (name: string) => void
   onChangeColor: (color: string) => void
   onArchive: () => void
@@ -11,13 +10,18 @@ interface ColumnMenuProps {
 }
 
 const PRESET_COLORS = [
-  '#8b95a7', '#ed9f55', '#8b83dc', '#68af87',
-  '#e06060', '#60a0e0', '#60c080', '#d0a060',
+  '#8b95a7',
+  '#ed9f55',
+  '#8b83dc',
+  '#68af87',
+  '#e06060',
+  '#60a0e0',
+  '#60c080',
+  '#d0a060',
 ]
 
 export function ColumnMenu({
   columnName,
-  cardCount,
   onRename,
   onChangeColor,
   onArchive,
@@ -50,12 +54,6 @@ export function ColumnMenu({
   }
 
   const handleDelete = () => {
-    if (cardCount > 0) {
-      const confirmed = window.confirm(
-        `"${columnName}" has ${cardCount} card(s). Move or archive them first, or confirm deletion.`,
-      )
-      if (!confirmed) return
-    }
     onDelete()
     setOpen(false)
   }
@@ -83,7 +81,11 @@ export function ColumnMenu({
                   className="h-7 w-full rounded border border-[#e1e4e9] px-2 text-xs text-[#515966] outline-none focus:border-[#a6a9ed]"
                 />
                 <div className="mt-1 flex justify-end gap-1">
-                  <button type="button" onClick={() => setRenaming(false)} className="text-[10px] text-[#858e9d] hover:text-[#515966]">
+                  <button
+                    type="button"
+                    onClick={() => setRenaming(false)}
+                    className="text-[10px] text-[#858e9d] hover:text-[#515966]"
+                  >
                     <X size={12} />
                   </button>
                 </div>
@@ -92,7 +94,10 @@ export function ColumnMenu({
               <>
                 <button
                   type="button"
-                  onClick={() => { setRenaming(true); setNameInput(columnName) }}
+                  onClick={() => {
+                    setRenaming(true)
+                    setNameInput(columnName)
+                  }}
                   className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-[#515966] hover:bg-[#f5f6f8]"
                 >
                   <Edit3 size={13} /> Rename

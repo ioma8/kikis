@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  type ReactNode,
+} from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import type { Profile } from '@/types/database'
@@ -32,64 +40,107 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const navigate = useNavigate()
   const initialized = useRef(false)
+  const mounted = useRef(true)
+  const bootstrapPromises = useRef(new Map<string, Promise<void>>())
 
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    if (data) setProfile(data)
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
+    setProfile(data ?? null)
   }, [])
 
-  const bootstrapIfNeeded = useCallback(async (userId: string, session: Session) => {
-    const displayName = session.user.user_metadata?.full_name ?? session.user.email?.split('@')[0] ?? 'User'
-    const { error } = await supabase.rpc('bootstrap_new_user', {
-      user_id: userId,
-      display_name: displayName,
-    })
-    if (error && !error.message.includes('duplicate key') && !error.message.includes('already exists')) {
-      console.error('Bootstrap failed:', error)
-    }
-    await fetchProfile(userId)
-  }, [fetchProfile])
+  const bootstrapIfNeeded = useCallback(
+    async (userId: string, session: Session) => {
+      const existing = bootstrapPromises.current.get(userId)
+      if (existing) return existing
+
+      const promise = (async () => {
+        const displayName =
+          session.user.user_metadata?.full_name ?? session.user.email?.split('@')[0] ?? 'User'
+        const { error } = await supabase.rpc('bootstrap_new_user', {
+          p_user_id: userId,
+          p_display_name: displayName,
+        })
+        if (error) throw error
+        await fetchProfile(userId)
+      })()
+
+      bootstrapPromises.current.set(userId, promise)
+      try {
+        await promise
+      } finally {
+        bootstrapPromises.current.delete(userId)
+      }
+    },
+    [fetchProfile],
+  )
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      initialized.current = true
+    mounted.current = true
+    supabase.auth
+      .getSession()
+      .then(async ({ data: { session } }) => {
+        initialized.current = true
+        if (!mounted.current) return
+        if (session?.user) {
+          try {
+            await bootstrapIfNeeded(session.user.id, session)
+          } catch (err) {
+            console.error('Bootstrap failed:', err)
+          }
+          if (!mounted.current) return
+          setUser(session.user)
+          setStatus('authenticated')
+          if (window.location.pathname === '/login' || window.location.pathname === '/') {
+            navigate('/board', { replace: true })
+          }
+        } else {
+          setStatus('unauthenticated')
+          navigate('/login', { replace: true })
+        }
+      })
+      .catch((err) => {
+        if (!mounted.current) return
+        console.error('Failed to restore session:', err)
+        setStatus('unauthenticated')
+        navigate('/login', { replace: true })
+      })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        setUser(session.user)
-        setStatus('authenticated')
-        fetchProfile(session.user.id)
-      } else {
+        if (event === 'SIGNED_IN') {
+          void bootstrapIfNeeded(session.user.id, session)
+            .then(() => {
+              if (!mounted.current) return
+              setUser(session.user)
+              setStatus('authenticated')
+              if (window.location.pathname === '/login' || window.location.pathname === '/') {
+                navigate('/board', { replace: true })
+              }
+            })
+            .catch((err) => {
+              if (mounted.current) console.error('Bootstrap failed:', err)
+            })
+        } else {
+          setUser(session.user)
+          setStatus('authenticated')
+          void fetchProfile(session.user.id).catch((err) =>
+            console.error('Failed to load profile:', err),
+          )
+        }
+      } else if (event === 'SIGNED_OUT' && initialized.current) {
+        setUser(null)
+        setProfile(null)
         setStatus('unauthenticated')
         navigate('/login', { replace: true })
       }
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          setUser(session.user)
-          setStatus('authenticated')
-          if (event === 'SIGNED_IN') {
-            await bootstrapIfNeeded(session.user.id, session)
-          } else {
-            fetchProfile(session.user.id)
-          }
-          if (initialized.current) {
-            navigate('/board', { replace: true })
-          }
-        } else if (event === 'SIGNED_OUT' && initialized.current) {
-          setUser(null)
-          setProfile(null)
-          setStatus('unauthenticated')
-          navigate('/login', { replace: true })
-        }
-      },
-    )
-
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted.current = false
+      void subscription.unsubscribe()
+    }
   }, [fetchProfile, bootstrapIfNeeded, navigate])
 
   const signInWithPassword = useCallback(async (email: string, password: string) => {
@@ -97,18 +148,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error
   }, [])
 
-  const signUp = useCallback(async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: undefined },
-    })
-    if (error) throw error
-    // If the user was just created, bootstrap eagerly
-    if (data.user && data.session) {
-      await bootstrapIfNeeded(data.user.id, data.session)
-    }
-  }, [bootstrapIfNeeded])
+  const signUp = useCallback(
+    async (email: string, password: string) => {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: undefined },
+      })
+      if (error) throw error
+      // If the user was just created, bootstrap eagerly
+      if (data.user && data.session) {
+        await bootstrapIfNeeded(data.user.id, data.session)
+      }
+    },
+    [bootstrapIfNeeded],
+  )
 
   const sendMagicLink = useCallback(async (email: string) => {
     const { error } = await supabase.auth.signInWithOtp({
@@ -119,13 +173,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signOut = useCallback(async () => {
-    const confirmed = window.confirm('Sign out of Kikis?')
-    if (!confirmed) return
-    await supabase.auth.signOut()
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
   }, [])
 
   return (
-    <AuthContext.Provider value={{ status, user, profile, signInWithPassword, signUp, sendMagicLink, signOut }}>
+    <AuthContext.Provider
+      value={{ status, user, profile, signInWithPassword, signUp, sendMagicLink, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   )
