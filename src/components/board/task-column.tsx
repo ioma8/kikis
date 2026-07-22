@@ -11,6 +11,7 @@ interface TaskColumnProps {
   onAddTask?: () => void
   onSelectCard?: (card: Card) => void
   onArchiveCard?: (card: Card) => void
+  onDeleteCard?: (card: Card) => void
   onRenameColumn?: (id: string, name: string) => void
   onChangeColumnColor?: (id: string, color: string) => void
   onArchiveColumn?: (id: string) => void
@@ -24,6 +25,7 @@ export function TaskColumn({
   onAddTask,
   onSelectCard,
   onArchiveCard,
+  onDeleteCard,
   onRenameColumn,
   onChangeColumnColor,
   onArchiveColumn,
@@ -32,9 +34,9 @@ export function TaskColumn({
   return (
     <KanbanColumn
       value={column.id}
-      className="flex min-w-[270px] flex-col rounded-xl border border-[#e1e4e9] bg-[#eef0f3]/70 p-3"
+      className="flex min-w-[270px] flex-col rounded-xl border border-[#e1e4e9] bg-[#eef0f3]/70 p-2.5"
     >
-      <div className="mb-3 flex items-center justify-between px-1">
+      <div className="mb-2.5 flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <span className="size-2 rounded-full" style={{ backgroundColor: column.color }} />
           <h2 className="text-[13px] font-semibold text-[#4a5260]">{column.name}</h2>
@@ -66,7 +68,7 @@ export function TaskColumn({
           </div>
         )}
       </div>
-      <KanbanColumnContent value={column.id} className="min-h-[230px] flex-1">
+      <KanbanColumnContent value={column.id} className="min-h-[160px] flex-1">
         {cards.map((card) => (
           <TaskCard
             key={card.id}
@@ -74,13 +76,14 @@ export function TaskColumn({
             isOverlay={isOverlay}
             onSelect={() => onSelectCard?.(card)}
             onArchive={() => onArchiveCard?.(card)}
+            onDelete={() => onDeleteCard?.(card)}
           />
         ))}
         {!isOverlay && (
           <button
             type="button"
             onClick={onAddTask}
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-[#949ca8] transition hover:bg-white hover:text-[#5c61d9] focus:bg-white focus:text-[#5c61d9]"
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-[#949ca8] transition hover:bg-white hover:text-[#5c61d9] focus:bg-white focus:text-[#5c61d9]"
           >
             <Plus size={14} /> Add a task
           </button>

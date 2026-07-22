@@ -17,6 +17,7 @@ import {
   updateColumn,
   archiveColumn,
   archiveCard,
+  deleteCard,
   deleteColumn as deleteColumnMutation,
   calculatePosition,
   compactPositions,
@@ -57,6 +58,7 @@ export default function BoardPage() {
   const [newBoardName, setNewBoardName] = useState('')
   const [creatingBoard, setCreatingBoard] = useState(false)
   const [pendingColumnDelete, setPendingColumnDelete] = useState<string | null>(null)
+  const [pendingCardDelete, setPendingCardDelete] = useState<Card | null>(null)
 
   // Search / filter state from URL
   const rawQuery = searchParams.get('q') ?? ''
@@ -408,6 +410,27 @@ export default function BoardPage() {
     [board],
   )
 
+  const confirmDeleteCard = useCallback(async () => {
+    if (!pendingCardDelete) return
+    try {
+      await deleteCard(pendingCardDelete.id)
+      setBoard((prev) => {
+        const next: KanbanValue = {}
+        for (const colId of Object.keys(prev)) {
+          next[colId] = prev[colId].filter((card) => card.id !== pendingCardDelete.id)
+        }
+        return next
+      })
+      if (editingCard?.id === pendingCardDelete.id) {
+        setEditorOpen(false)
+        setEditingCard(null)
+      }
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to delete task')
+      throw err
+    }
+  }, [editingCard, pendingCardDelete])
+
   const deleteColumn = useCallback(
     async (id: string) => {
       const colCards = board[id] ?? []
@@ -549,18 +572,18 @@ export default function BoardPage() {
     <div className="min-h-screen bg-[#f5f6f8] text-[#202329]">
       <AppHeader />
 
-      <main className="mx-auto max-w-[1540px] px-6 py-8 lg:px-10 lg:py-10">
-        <section className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-          <div>
+      <main className="mx-auto max-w-[1540px] px-6 py-4 lg:px-10 lg:py-5">
+        <section className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-baseline gap-2">
             {/* Board selector */}
-            <div className="relative mb-1">
+            <div className="relative">
               <button
                 type="button"
                 onClick={() => setShowBoardMenu(!showBoardMenu)}
-                className="inline-flex items-center gap-2 text-[30px] font-semibold tracking-[-0.04em] text-[#242932] hover:text-[#5c61d9]"
+                className="inline-flex items-center gap-1.5 text-[22px] font-semibold tracking-[-0.04em] text-[#242932] hover:text-[#5c61d9]"
               >
                 {boardName || 'Board'}
-                <ChevronDown size={20} className="text-[#9aa2ad]" />
+                <ChevronDown size={17} className="text-[#9aa2ad]" />
               </button>
 
               {showBoardMenu && (
@@ -640,10 +663,10 @@ export default function BoardPage() {
                 </>
               )}
             </div>
-            <p className="text-sm text-[#858e9d]">
+            <p className="truncate text-xs text-[#858e9d]">
               {totalCards > 0
-                ? `${totalCards} tasks across ${columns.length} columns.`
-                : 'A clear view of what needs your attention.'}
+                ? `${totalCards} tasks · ${columns.length} columns`
+                : 'Your tasks at a glance'}
             </p>
           </div>
         </section>
@@ -682,7 +705,7 @@ export default function BoardPage() {
         {actionError && (
           <div
             role="alert"
-            className="mb-4 flex items-center justify-between rounded-lg border border-[#f0d4a6] bg-[#fffaf0] px-3 py-2 text-xs text-[#8f6728]"
+            className="mb-3 flex items-center justify-between rounded-lg border border-[#f0d4a6] bg-[#fffaf0] px-3 py-2 text-xs text-[#8f6728]"
           >
             <span>{actionError}</span>
             <button
@@ -707,7 +730,7 @@ export default function BoardPage() {
             restoreOnCancel
             disabled={hasFilters || saving}
           >
-            <KanbanBoard className="flex gap-4 min-w-[1120px]">
+            <KanbanBoard className="flex min-w-[1120px] gap-3">
               {columns.map((column) => (
                 <TaskColumn
                   key={column.id}
@@ -732,6 +755,7 @@ export default function BoardPage() {
                         )
                       })
                   }}
+                  onDeleteCard={setPendingCardDelete}
                   onRenameColumn={handleRenameColumn}
                   onChangeColumnColor={handleChangeColumnColor}
                   onArchiveColumn={handleArchiveColumn}
@@ -743,7 +767,7 @@ export default function BoardPage() {
                   <button
                     type="button"
                     onClick={handleAddColumn}
-                    className="mt-12 flex items-center gap-2 rounded-lg border-2 border-dashed border-[#d0d4db] px-4 py-3 text-sm text-[#949ca8] transition hover:border-[#5c61d9] hover:text-[#5c61d9]"
+                    className="mt-8 flex items-center gap-2 rounded-lg border-2 border-dashed border-[#d0d4db] px-4 py-2.5 text-sm text-[#949ca8] transition hover:border-[#5c61d9] hover:text-[#5c61d9]"
                   >
                     <Plus size={15} /> Add column
                   </button>
@@ -766,7 +790,7 @@ export default function BoardPage() {
           </Kanban>
         </section>
 
-        <footer className="mt-9 flex items-center justify-between border-t border-[#e2e5ea] pt-4 text-[11px] text-[#a1a8b3]">
+        <footer className="mt-5 flex items-center justify-between border-t border-[#e2e5ea] pt-3 text-[11px] text-[#a1a8b3]">
           <span>Personal workspace</span>
           <span>{saving ? 'Saving…' : actionError ? 'Changes need attention' : 'Synced'}</span>
         </footer>
@@ -791,6 +815,17 @@ export default function BoardPage() {
         confirmLabel="Move and delete"
         destructive
         onConfirm={confirmDeleteColumn}
+      />
+      <ConfirmDialog
+        open={pendingCardDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingCardDelete(null)
+        }}
+        title={`Delete "${pendingCardDelete?.title ?? 'task'}"?`}
+        description="Permanently delete this task? This cannot be undone."
+        confirmLabel="Delete task"
+        destructive
+        onConfirm={confirmDeleteCard}
       />
     </div>
   )
